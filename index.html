@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- APPLICATION VERSION TRACKER -->
-  <meta name="app-version" content="1.3.0" />
+  <meta name="app-version" content="1.4.0" />
   <title>MovieHub | Stream & Upload Movies</title>
   <meta name="description" content="Watch and stream movies on MovieHub" />
   
@@ -49,13 +49,6 @@
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #3f3f46;
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
     }
   </style>
 </head>
@@ -173,7 +166,7 @@
         </span>
       </div>
       <span id="navVersionBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700/50">
-        v1.3.0
+        v1.4.0
       </span>
     </div>
 
@@ -246,7 +239,7 @@
       <div class="pt-3 border-t border-zinc-800/80 text-[10px] text-zinc-500 space-y-1">
         <div class="flex items-center justify-between">
           <span>Client Version:</span>
-          <span id="sidebarVersionVal" class="font-mono text-zinc-400">v1.3.0</span>
+          <span id="sidebarVersionVal" class="font-mono text-zinc-400">v1.4.0</span>
         </div>
         <div class="flex items-center justify-between">
           <span>Status:</span>
@@ -259,7 +252,6 @@
       
       <!-- CUSTOM HOME VIEW -->
       <div id="homeView" class="space-y-8">
-        <!-- SPOTLIGHT HERO BANNER -->
         <div id="homeHeroContainer" class="relative rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-900 min-h-[280px] sm:min-h-[340px] flex items-end p-6 sm:p-10 shadow-2xl">
           <div id="homeHeroBg" class="absolute inset-0 bg-cover bg-center transition-all duration-500"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/70 to-transparent"></div>
@@ -282,7 +274,6 @@
           </div>
         </div>
 
-        <!-- RECENTLY PUBLISHED ROW -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <h2 class="text-base font-bold text-white flex items-center gap-2">
@@ -293,11 +284,9 @@
             </button>
           </div>
           <div id="homeRecentRow" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            <!-- Populated dynamically -->
           </div>
         </div>
 
-        <!-- YOUR PLAYLISTS QUICK ROW -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <h2 class="text-base font-bold text-white flex items-center gap-2">
@@ -308,7 +297,6 @@
             </button>
           </div>
           <div id="homePlaylistsRow" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            <!-- Populated dynamically -->
           </div>
         </div>
       </div>
@@ -321,13 +309,12 @@
             <p class="text-xs text-zinc-400 mt-1">Browse and filter all uploaded movies on MovieHub.</p>
           </div>
 
-          <!-- Category / Filter Chips -->
           <div class="flex flex-wrap gap-2 text-xs">
             <button onclick="setMovieFilter('all')" id="filterAll" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition">
               All Movies
             </button>
             <button onclick="setMovieFilter('drive')" id="filterDrive" class="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition">
-              Drive Streams
+              Embed Streams
             </button>
             <button onclick="setMovieFilter('popular')" id="filterPopular" class="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition">
               Most Viewed
@@ -352,10 +339,8 @@
         </div>
 
         <div id="playlistsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <!-- Populated dynamically -->
         </div>
 
-        <!-- SINGLE PLAYLIST DETAIL SECTION -->
         <div id="playlistDetailContainer" class="hidden space-y-6 pt-4 border-t border-zinc-800">
           <div class="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
             <div class="space-y-1">
@@ -375,7 +360,6 @@
           </div>
 
           <div id="playlistMoviesList" class="space-y-3">
-            <!-- Playlist videos list -->
           </div>
         </div>
       </div>
@@ -387,7 +371,6 @@
           <p class="text-xs text-zinc-400 mt-1">Manage your account and client updates.</p>
         </div>
 
-        <!-- VERSION & UPDATES CARD -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
           <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
             <i data-lucide="cpu" class="w-4 h-4 text-blue-500"></i> Client & Server Version Control
@@ -396,11 +379,11 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-xs">
             <div>
               <p class="text-[11px] text-zinc-500">Current Client Version</p>
-              <p id="settingsClientVersion" class="font-mono font-bold text-zinc-200">v1.3.0</p>
+              <p id="settingsClientVersion" class="font-mono font-bold text-zinc-200">v1.4.0</p>
             </div>
             <div>
               <p class="text-[11px] text-zinc-500">Server Live Version</p>
-              <p id="settingsServerVersion" class="font-mono font-bold text-emerald-400">v1.3.0 (Verified)</p>
+              <p id="settingsServerVersion" class="font-mono font-bold text-emerald-400">v1.4.0 (Verified)</p>
             </div>
           </div>
 
@@ -460,7 +443,7 @@
           <div class="w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/80 aspect-video relative group">
             <div id="playerContainer" class="w-full h-full">
               <video id="mainPlayer" class="w-full h-full object-contain" controls autoplay></video>
-              <iframe id="googleDriveIframe" class="w-full h-full border-0 hidden" allow="autoplay; fullscreen"></iframe>
+              <iframe id="googleDriveIframe" class="w-full h-full border-0 hidden" allow="autoplay; fullscreen" allowfullscreen></iframe>
             </div>
           </div>
 
@@ -489,7 +472,6 @@
                   </button>
                 </div>
 
-                <!-- SAVE TO PLAYLIST BUTTON -->
                 <button onclick="openSaveToPlaylistModal()" class="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full text-xs font-medium text-zinc-300 transition">
                   <i data-lucide="plus-square" class="w-4 h-4 text-blue-400"></i>
                   Save to Playlist
@@ -594,7 +576,6 @@
       </div>
 
       <div id="savePlaylistOptions" class="space-y-2 max-h-60 overflow-y-auto">
-        <!-- Rendered dynamically -->
       </div>
 
       <div class="pt-2 border-t border-zinc-800 flex justify-between items-center">
@@ -653,7 +634,7 @@
               Replace Video File
             </button>
             <button type="button" id="editTabDrive" onclick="setEditSourceTab('drive')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition">
-              Google Drive Link
+              Link / Embed Stream
             </button>
           </div>
         </div>
@@ -665,8 +646,8 @@
         </div>
 
         <div id="editDriveLinkContainer" class="hidden space-y-2">
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive Video Link *</label>
-          <input id="editDriveUrl" type="url" placeholder="https://drive.google.com/file/d/123456789.../view?usp=sharing" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive / YouTube / Direct Link *</label>
+          <input id="editDriveUrl" type="url" placeholder="https://drive.google.com/... or https://youtube.com/watch?v=..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
         </div>
 
         <div>
@@ -715,7 +696,7 @@
               Upload Video File
             </button>
             <button type="button" id="tabDrive" onclick="setSourceTab('drive')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition">
-              Google Drive Link
+              Link (Drive / YouTube / Web)
             </button>
           </div>
         </div>
@@ -723,12 +704,13 @@
         <div id="fileUploadContainer">
           <label class="block text-xs font-semibold text-zinc-400 mb-1">Select Video File *</label>
           <input id="uploadFile" type="file" accept="video/*" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
+          <p class="text-[10px] text-zinc-500 mt-1">Uploaded video files are stored permanently in your browser's IndexedDB storage.</p>
         </div>
 
         <div id="driveLinkContainer" class="hidden space-y-2">
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive Video Link *</label>
-          <input id="uploadDriveUrl" type="url" placeholder="https://drive.google.com/file/d/123456789.../view?usp=sharing" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-          <p class="text-[10px] text-zinc-500">Paste any shareable Google Drive link to directly stream your movie file.</p>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive / YouTube / Direct Stream URL *</label>
+          <input id="uploadDriveUrl" type="url" placeholder="https://drive.google.com/file/d/... or https://youtube.com/watch?v=..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+          <p class="text-[10px] text-zinc-500">Paste any shareable Google Drive, YouTube, or direct MP4 stream URL.</p>
         </div>
 
         <div>
@@ -760,8 +742,64 @@
   </div>
 
   <script>
+    // INDEXED DB PERISTENT VIDEO FILE STORAGE
+    const DB_NAME = "MovieHubVideoDB";
+    const DB_VERSION = 1;
+    const STORE_NAME = "video_blobs";
+
+    function openVideoDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveVideoBlobToDB(movieId, fileBlob) {
+      try {
+        const db = await openVideoDB();
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        store.put(fileBlob, movieId);
+        return new Promise((resolve) => tx.oncomplete = () => resolve(true));
+      } catch (e) {
+        console.warn("Failed to store video blob in IndexedDB:", e);
+        return false;
+      }
+    }
+
+    async function getVideoBlobFromDB(movieId) {
+      try {
+        const db = await openVideoDB();
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get(movieId);
+        return new Promise((resolve) => {
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function deleteVideoBlobFromDB(movieId) {
+      try {
+        const db = await openVideoDB();
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        store.delete(movieId);
+      } catch (e) {}
+    }
+
     // APP VERSION CONSTANTS
-    const CURRENT_CLIENT_VERSION = document.querySelector('meta[name="app-version"]')?.content || "1.3.0";
+    const CURRENT_CLIENT_VERSION = document.querySelector('meta[name="app-version"]')?.content || "1.4.0";
 
     // EMAILJS KEYS
     const EMAILJS_PUBLIC_KEY = "NJ0dfOYioKH3XMU_b";
@@ -927,7 +965,6 @@
       }
     }
 
-    // PLAYLIST PERSISTENCE
     function loadSavedPlaylists() {
       const stored = localStorage.getItem('moviehub_playlists_data');
       if (stored) {
@@ -1232,19 +1269,41 @@
       showToast(`Removed moderator ${email}`);
     }
 
-    function parseGoogleDriveUrl(url) {
+    // MULTI-PROVIDER MEDIA EMBED PARSER (Drive, YouTube, Direct URL)
+    function parseMediaUrl(url) {
       if (!url) return null;
-      const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) {
-        const fileId = match[1];
+
+      // 1. YouTube Check
+      const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      if (ytMatch && ytMatch[1]) {
+        const ytId = ytMatch[1];
         return {
-          id: fileId,
-          embedUrl: `https://drive.google.com/file/d/${fileId}/preview`,
-          directUrl: `https://drive.google.com/uc?export=download&id=${fileId}`,
-          driveThumb: `https://lh3.googleusercontent.com/d/${fileId}`
+          type: 'iframe',
+          id: ytId,
+          embedUrl: `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`,
+          thumb: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
         };
       }
-      return null;
+
+      // 2. Google Drive Check
+      const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        const fileId = driveMatch[1];
+        return {
+          type: 'iframe',
+          id: fileId,
+          embedUrl: `https://drive.google.com/file/d/${fileId}/preview`,
+          thumb: `https://lh3.googleusercontent.com/d/${fileId}`
+        };
+      }
+
+      // 3. Direct Media Stream Link
+      return {
+        type: 'direct',
+        id: null,
+        embedUrl: '',
+        thumb: ''
+      };
     }
 
     function createDynamicPosterThumbnail(titleText) {
@@ -1489,7 +1548,7 @@
       } else {
         heroBg.style.backgroundImage = `none`;
         heroTitle.textContent = "Welcome to MovieHub";
-        heroDesc.textContent = "Your modern streaming portal. Upload movie files or Google Drive video links to begin.";
+        heroDesc.textContent = "Your modern streaming portal. Upload movie files or Google Drive/YouTube video links to begin.";
         heroActions.innerHTML = canUpload ? `
           <button onclick="openUploadModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center gap-2 transition">
             <i data-lucide="upload" class="w-4 h-4"></i> Upload Movie Now
@@ -1547,7 +1606,7 @@
       let filtered = [...movies];
 
       if (activeFilter === 'drive') {
-        filtered = filtered.filter(m => m.isDrive);
+        filtered = filtered.filter(m => m.isEmbed);
       } else if (activeFilter === 'popular') {
         filtered.sort((a, b) => b.views - a.views);
       }
@@ -1602,7 +1661,7 @@
         <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800/80" onclick="openWatchView('${movie.id}')">
           <img src="${thumbSrc}" alt="${movie.title}" onerror="this.src='${createDynamicPosterThumbnail(movie.title)}'" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
           <div class="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-zinc-200 flex items-center gap-1">
-            ${movie.isDrive ? '<i data-lucide="hard-drive" class="w-3 h-3 text-blue-400"></i> DRIVE' : 'HD'}
+            ${movie.isEmbed ? '<i data-lucide="play-circle" class="w-3 h-3 text-blue-400"></i> EMBED' : 'LOCAL'}
           </div>
           <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
             <button onclick="openSaveToPlaylistModal('${movie.id}', event)" class="bg-blue-600/80 hover:bg-blue-600 text-white p-1.5 rounded-lg shadow-lg" title="Add to Playlist">
@@ -1867,7 +1926,8 @@
       showToast(`Removed from playlist`);
     }
 
-    function openWatchView(movieId) {
+    // WATCH VIEW CONTROLLER (Handles Local File Re-hydration from IndexedDB)
+    async function openWatchView(movieId) {
       if (!currentUser.isSignedIn) {
         openLoginOverlay();
         return;
@@ -1889,7 +1949,7 @@
       const player = document.getElementById('mainPlayer');
       const driveIframe = document.getElementById('googleDriveIframe');
 
-      if (movie.isDrive && movie.embedUrl) {
+      if (movie.isEmbed && movie.embedUrl) {
         player.pause();
         player.classList.add('hidden');
         driveIframe.classList.remove('hidden');
@@ -1898,7 +1958,18 @@
         driveIframe.classList.add('hidden');
         driveIframe.src = '';
         player.classList.remove('hidden');
-        player.src = movie.videoUrl;
+
+        // RE-HYDRATE LOCAL VIDEO FROM INDEXED DB IF NEEDED
+        if (movie.hasIndexedDB) {
+          const storedBlob = await getVideoBlobFromDB(movie.id);
+          if (storedBlob) {
+            player.src = URL.createObjectURL(storedBlob);
+          } else if (movie.videoUrl) {
+            player.src = movie.videoUrl;
+          }
+        } else {
+          player.src = movie.videoUrl;
+        }
       }
 
       document.getElementById('watchTitle').textContent = movie.title;
@@ -2043,7 +2114,7 @@
       document.getElementById('editDescription').value = movie.description || '';
       document.getElementById('editThumbnail').value = movie.thumbnail || '';
 
-      if (movie.isDrive) {
+      if (movie.isEmbed) {
         setEditSourceTab('drive');
         document.getElementById('editDriveUrl').value = movie.embedUrl || movie.videoUrl || '';
       } else {
@@ -2094,9 +2165,12 @@
           const fileInput = document.getElementById('editFile');
           if (fileInput.files && fileInput.files.length > 0) {
             const videoFile = fileInput.files[0];
+            await saveVideoBlobToDB(movie.id, videoFile);
+
             movie.videoUrl = URL.createObjectURL(videoFile);
             movie.embedUrl = '';
-            movie.isDrive = false;
+            movie.isEmbed = false;
+            movie.hasIndexedDB = true;
 
             if (!newThumbnail) {
               newThumbnail = await generateVideoFrameThumbnail(movie.videoUrl, newTitle);
@@ -2104,22 +2178,28 @@
           }
         } else {
           const driveUrlInput = document.getElementById('editDriveUrl').value.trim();
-          const parsedDrive = parseGoogleDriveUrl(driveUrlInput);
+          const parsedMedia = parseMediaUrl(driveUrlInput);
 
-          if (parsedDrive) {
-            movie.isDrive = true;
-            movie.embedUrl = parsedDrive.embedUrl;
-            movie.videoUrl = parsedDrive.directUrl;
+          if (parsedMedia && parsedMedia.type === 'iframe') {
+            movie.isEmbed = true;
+            movie.embedUrl = parsedMedia.embedUrl;
+            movie.videoUrl = driveUrlInput;
+            movie.hasIndexedDB = false;
 
-            if (!newThumbnail) {
-              newThumbnail = parsedDrive.driveThumb;
+            if (!newThumbnail && parsedMedia.thumb) {
+              newThumbnail = parsedMedia.thumb;
             }
+          } else {
+            movie.isEmbed = false;
+            movie.embedUrl = '';
+            movie.videoUrl = driveUrlInput;
+            movie.hasIndexedDB = false;
           }
         }
 
         if (newThumbnail) {
-          const parsedThumbDrive = parseGoogleDriveUrl(newThumbnail);
-          movie.thumbnail = parsedThumbDrive ? parsedThumbDrive.driveThumb : newThumbnail;
+          const parsedThumbDrive = parseMediaUrl(newThumbnail);
+          movie.thumbnail = (parsedThumbDrive && parsedThumbDrive.thumb) ? parsedThumbDrive.thumb : newThumbnail;
         } else if (!movie.thumbnail) {
           movie.thumbnail = createDynamicPosterThumbnail(newTitle);
         }
@@ -2163,14 +2243,15 @@
       document.getElementById('deleteModal').classList.add('hidden');
     }
 
-    function executeDeleteMovie() {
+    async function executeDeleteMovie() {
       if (!pendingDeleteMovieId) return;
 
       movies = movies.filter(m => m.id !== pendingDeleteMovieId);
-      // Remove deleted movie ID from all playlists
       playlists.forEach(pl => {
         pl.movieIds = pl.movieIds.filter(id => id !== pendingDeleteMovieId);
       });
+
+      await deleteVideoBlobFromDB(pendingDeleteMovieId);
 
       saveMoviesToStorage();
       savePlaylistsToStorage();
@@ -2225,13 +2306,16 @@
 
         let videoUrl = '';
         let embedUrl = '';
-        let isDrive = false;
+        let isEmbed = false;
+        let hasIndexedDB = false;
         let finalThumbnail = thumbInput;
 
+        const movieId = "m_" + Date.now();
+
         if (finalThumbnail) {
-          const parsedThumbDrive = parseGoogleDriveUrl(finalThumbnail);
-          if (parsedThumbDrive) {
-            finalThumbnail = parsedThumbDrive.driveThumb;
+          const parsedThumb = parseMediaUrl(finalThumbnail);
+          if (parsedThumb && parsedThumb.thumb) {
+            finalThumbnail = parsedThumb.thumb;
           }
         }
 
@@ -2244,39 +2328,50 @@
             return;
           }
           const videoFile = fileInput.files[0];
+          
+          // Save actual video blob into IndexedDB permanently
+          await saveVideoBlobToDB(movieId, videoFile);
+
           videoUrl = URL.createObjectURL(videoFile);
+          hasIndexedDB = true;
 
           if (!finalThumbnail) {
             finalThumbnail = await generateVideoFrameThumbnail(videoUrl, title);
           }
         } else {
           const driveUrlInput = document.getElementById('uploadDriveUrl').value.trim();
-          const parsedDrive = parseGoogleDriveUrl(driveUrlInput);
+          const parsedMedia = parseMediaUrl(driveUrlInput);
 
-          if (!parsedDrive) {
-            alert("Please enter a valid Google Drive file link.");
+          if (!parsedMedia) {
+            alert("Please enter a valid Google Drive, YouTube, or direct video link.");
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
             return;
           }
 
-          isDrive = true;
-          embedUrl = parsedDrive.embedUrl;
-          videoUrl = parsedDrive.directUrl;
+          if (parsedMedia.type === 'iframe') {
+            isEmbed = true;
+            embedUrl = parsedMedia.embedUrl;
+            videoUrl = driveUrlInput;
 
-          if (!finalThumbnail) {
-            finalThumbnail = parsedDrive.driveThumb;
+            if (!finalThumbnail && parsedMedia.thumb) {
+              finalThumbnail = parsedMedia.thumb;
+            }
+          } else {
+            isEmbed = false;
+            videoUrl = driveUrlInput;
           }
         }
 
         const newMovie = {
-          id: "m_" + Date.now(),
+          id: movieId,
           title: title,
           uploader: currentUser.name,
           uploaderEmail: currentUser.email,
           videoUrl: videoUrl,
           embedUrl: embedUrl,
-          isDrive: isDrive,
+          isEmbed: isEmbed,
+          hasIndexedDB: hasIndexedDB,
           thumbnail: finalThumbnail || createDynamicPosterThumbnail(title),
           views: 1,
           likes: 0,
