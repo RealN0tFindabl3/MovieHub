@@ -308,6 +308,10 @@
                   <i data-lucide="share-2" class="w-4 h-4"></i>
                   Share
                 </button>
+                <button id="editWatchMovieBtn" onclick="openEditWatchMovie()" class="hidden flex items-center gap-1.5 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-full text-xs font-medium transition">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                  Edit
+                </button>
                 <button id="deleteWatchMovieBtn" onclick="confirmDeleteCurrentMovie()" class="hidden flex items-center gap-1.5 px-4 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/20 rounded-full text-xs font-medium transition">
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
                   Delete
@@ -378,6 +382,68 @@
     </div>
   </div>
 
+  <!-- MOVIE EDIT MODAL -->
+  <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
+        <div class="flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-5 h-5 text-blue-500"></i>
+          <h2 class="text-sm font-bold text-zinc-100">Edit Movie Details</h2>
+        </div>
+        <button onclick="closeEditModal()" class="text-zinc-500 hover:text-zinc-300">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="editForm" onsubmit="handleMovieEdit(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Movie Title *</label>
+          <input required id="editTitle" type="text" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold text-zinc-400">Video Source *</label>
+          <div class="flex gap-2">
+            <button type="button" id="editTabFile" onclick="setEditSourceTab('file')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition">
+              Replace Video File
+            </button>
+            <button type="button" id="editTabDrive" onclick="setEditSourceTab('drive')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition">
+              Google Drive Link
+            </button>
+          </div>
+        </div>
+
+        <div id="editFileUploadContainer">
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Select New Video File (Optional)</label>
+          <input id="editFile" type="file" accept="video/*" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
+          <p class="text-[10px] text-zinc-500 mt-1">Leave empty to keep current video file.</p>
+        </div>
+
+        <div id="editDriveLinkContainer" class="hidden space-y-2">
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive Video Link *</label>
+          <input id="editDriveUrl" type="url" placeholder="https://drive.google.com/file/d/123456789.../view?usp=sharing" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Thumbnail (Optional)</label>
+          <input id="editThumbnail" type="url" placeholder="Paste image URL... Leave blank to auto-generate from video." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Description</label>
+          <textarea id="editDescription" rows="3" placeholder="Provide movie details..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-3">
+          <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition">Cancel</button>
+          <button type="submit" id="editSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30 transition flex items-center gap-2">
+            <span>Save Changes</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MOVIE UPLOAD MODAL -->
   <div id="uploadModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
@@ -422,7 +488,7 @@
 
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">Custom Thumbnail (Optional)</label>
-          <input id="uploadThumbnail" type="url" placeholder="Paste image URL or Google Drive image link..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+          <input id="uploadThumbnail" type="url" placeholder="Leave blank to auto-extract thumbnail frame from video..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
         </div>
 
         <div>
@@ -477,8 +543,10 @@
 
     let currentWatchMovie = null;
     let pendingDeleteMovieId = null;
+    let pendingEditMovieId = null;
     let activeNav = 'Home';
     let currentSourceType = 'file';
+    let editSourceType = 'file';
 
     function setCookie(name, value, days = 7) {
       const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -502,7 +570,6 @@
         try {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            // Filter out old sample movies if present
             movies = parsed.filter(m => !m.id.startsWith('m_sample_'));
             saveMoviesToStorage();
             return;
@@ -812,17 +879,50 @@
       return null;
     }
 
+    // GENERATE VIDEO THUMBNAIL FRAME FROM FILE OR URL
     function generateVideoFrameThumbnail(videoSrc) {
       return new Promise((resolve) => {
+        // Fallback placeholder image canvas generator
+        const createDefaultCanvasThumb = () => {
+          const c = document.createElement('canvas');
+          c.width = 640;
+          c.height = 360;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#18181b';
+          ctx.fillRect(0, 0, 640, 360);
+          ctx.fillStyle = '#2563eb';
+          ctx.beginPath();
+          ctx.arc(320, 180, 40, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(310, 165);
+          ctx.lineTo(335, 180);
+          ctx.lineTo(310, 195);
+          ctx.fill();
+          return c.toDataURL('image/png');
+        };
+
         const video = document.getElementById('hiddenThumbVideo');
         const canvas = document.getElementById('hiddenThumbCanvas');
         const ctx = canvas.getContext('2d');
-        const fallbackThumb = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80';
+
+        let resolved = false;
+        const finish = (thumb) => {
+          if (!resolved) {
+            resolved = true;
+            resolve(thumb);
+          }
+        };
 
         video.src = videoSrc;
 
         video.onloadeddata = () => {
-          video.currentTime = Math.min(1.5, video.duration / 2 || 1);
+          try {
+            video.currentTime = Math.min(1.5, (video.duration || 3) / 2);
+          } catch (e) {
+            finish(createDefaultCanvasThumb());
+          }
         };
 
         video.onseeked = () => {
@@ -831,14 +931,14 @@
             canvas.height = video.videoHeight || 360;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-            resolve(dataUrl);
+            finish(dataUrl);
           } catch (e) {
-            resolve(fallbackThumb);
+            finish(createDefaultCanvasThumb());
           }
         };
 
-        video.onerror = () => { resolve(fallbackThumb); };
-        setTimeout(() => { resolve(fallbackThumb); }, 4000);
+        video.onerror = () => { finish(createDefaultCanvasThumb()); };
+        setTimeout(() => { finish(createDefaultCanvasThumb()); }, 3000);
       });
     }
 
@@ -848,6 +948,26 @@
       const driveContainer = document.getElementById('driveLinkContainer');
       const tabFile = document.getElementById('tabFile');
       const tabDrive = document.getElementById('tabDrive');
+
+      if (type === 'file') {
+        fileContainer.classList.remove('hidden');
+        driveContainer.classList.add('hidden');
+        tabFile.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
+        tabDrive.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
+      } else {
+        fileContainer.classList.add('hidden');
+        driveContainer.classList.remove('hidden');
+        tabDrive.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
+        tabFile.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
+      }
+    }
+
+    function setEditSourceTab(type) {
+      editSourceType = type;
+      const fileContainer = document.getElementById('editFileUploadContainer');
+      const driveContainer = document.getElementById('editDriveLinkContainer');
+      const tabFile = document.getElementById('editTabFile');
+      const tabDrive = document.getElementById('editTabDrive');
 
       if (type === 'file') {
         fileContainer.classList.remove('hidden');
@@ -996,9 +1116,14 @@
               ${movie.isDrive ? '<i data-lucide="hard-drive" class="w-3 h-3 text-blue-400"></i> DRIVE' : 'HD'}
             </div>
             ${canUpload ? `
-              <button onclick="promptDeleteMovie('${movie.id}', event)" class="absolute top-2 right-2 bg-rose-600/80 hover:bg-rose-600 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition shadow-lg" title="Delete Movie">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              </button>
+              <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                <button onclick="promptEditMovie('${movie.id}', event)" class="bg-blue-600/80 hover:bg-blue-600 text-white p-1.5 rounded-lg shadow-lg" title="Edit Movie">
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="promptDeleteMovie('${movie.id}', event)" class="bg-rose-600/80 hover:bg-rose-600 text-white p-1.5 rounded-lg shadow-lg" title="Delete Movie">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
             ` : ''}
           </div>
           <div class="flex gap-3 px-0.5" onclick="openWatchView('${movie.id}')">
@@ -1063,10 +1188,13 @@
       document.getElementById('watchDescription').textContent = movie.description;
 
       const deleteWatchBtn = document.getElementById('deleteWatchMovieBtn');
+      const editWatchBtn = document.getElementById('editWatchMovieBtn');
       if (isUserModerator(currentUser.email)) {
         deleteWatchBtn.classList.remove('hidden');
+        editWatchBtn.classList.remove('hidden');
       } else {
         deleteWatchBtn.classList.add('hidden');
+        editWatchBtn.classList.add('hidden');
       }
 
       renderComments();
@@ -1172,6 +1300,120 @@
     function shareMovie() {
       navigator.clipboard?.writeText(window.location.href);
       showToast("Link copied to clipboard!");
+    }
+
+    // EDIT MOVIE FUNCTIONS
+    function promptEditMovie(movieId, event) {
+      if (event) event.stopPropagation();
+      if (!isUserModerator(currentUser.email)) {
+        alert("Only authorized moderators can edit movies.");
+        return;
+      }
+
+      const movie = movies.find(m => m.id === movieId);
+      if (!movie) return;
+
+      pendingEditMovieId = movieId;
+
+      document.getElementById('editTitle').value = movie.title;
+      document.getElementById('editDescription').value = movie.description || '';
+      document.getElementById('editThumbnail').value = movie.thumbnail || '';
+
+      if (movie.isDrive) {
+        setEditSourceTab('drive');
+        document.getElementById('editDriveUrl').value = movie.embedUrl || movie.videoUrl || '';
+      } else {
+        setEditSourceTab('file');
+      }
+
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function openEditWatchMovie() {
+      if (!currentWatchMovie) return;
+      promptEditMovie(currentWatchMovie.id);
+    }
+
+    function closeEditModal() {
+      pendingEditMovieId = null;
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    async function handleMovieEdit(e) {
+      e.preventDefault();
+
+      if (!pendingEditMovieId || !isUserModerator(currentUser.email)) return;
+
+      const movie = movies.find(m => m.id === pendingEditMovieId);
+      if (!movie) return;
+
+      const submitBtn = document.getElementById('editSubmitBtn');
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Saving Changes...</span>
+      `;
+
+      try {
+        const newTitle = document.getElementById('editTitle').value.trim();
+        const newDescription = document.getElementById('editDescription').value.trim();
+        let newThumbnail = document.getElementById('editThumbnail').value.trim();
+
+        movie.title = newTitle;
+        movie.description = newDescription;
+
+        if (editSourceType === 'file') {
+          const fileInput = document.getElementById('editFile');
+          if (fileInput.files && fileInput.files.length > 0) {
+            const videoFile = fileInput.files[0];
+            movie.videoUrl = URL.createObjectURL(videoFile);
+            movie.embedUrl = '';
+            movie.isDrive = false;
+
+            if (!newThumbnail) {
+              newThumbnail = await generateVideoFrameThumbnail(movie.videoUrl);
+            }
+          }
+        } else {
+          const driveUrlInput = document.getElementById('editDriveUrl').value.trim();
+          const parsedDrive = parseGoogleDriveUrl(driveUrlInput);
+
+          if (parsedDrive) {
+            movie.isDrive = true;
+            movie.embedUrl = parsedDrive.embedUrl;
+            movie.videoUrl = parsedDrive.directUrl;
+
+            if (!newThumbnail) {
+              newThumbnail = await generateVideoFrameThumbnail(movie.videoUrl);
+            }
+          }
+        }
+
+        if (newThumbnail) {
+          const parsedThumbDrive = parseGoogleDriveUrl(newThumbnail);
+          movie.thumbnail = parsedThumbDrive ? parsedThumbDrive.directUrl : newThumbnail;
+        }
+
+        saveMoviesToStorage();
+        closeEditModal();
+        showToast("Movie updated successfully!");
+
+        if (currentWatchMovie && currentWatchMovie.id === movie.id) {
+          openWatchView(movie.id);
+        } else {
+          renderMoviesGrid();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error updating movie.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
     }
 
     // DELETE MOVIE FUNCTIONS
@@ -1303,7 +1545,7 @@
           videoUrl: videoUrl,
           embedUrl: embedUrl,
           isDrive: isDrive,
-          thumbnail: finalThumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80',
+          thumbnail: finalThumbnail,
           views: 1,
           likes: 0,
           date: "Just now",
