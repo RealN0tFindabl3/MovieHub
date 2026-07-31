@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- APPLICATION VERSION TRACKER -->
-  <meta name="app-version" content="1.4.0" />
-  <title>MovieHub | Stream & Upload Movies</title>
-  <meta name="description" content="Watch and stream movies on MovieHub" />
+  <meta name="app-version" content="2.0.0" />
+  <title>MovieHub v2.0.0</title>
+  <meta name="description" content="Watch, upload, and manage movies with MovieHub" />
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,11 +20,15 @@
       darkMode: 'class',
       theme: {
         extend: {
+          borderRadius: {
+            'card': '10px',
+            'button': '8px'
+          },
           colors: {
             brand: {
               50: '#f6f6f6',
               100: '#e7e7e7',
-              800: '#1f1f22',
+              800: '#18181b',
               900: '#121214',
               950: '#09090b',
               accent: '#2563eb'
@@ -35,7 +39,7 @@
     }
   </script>
   <style>
-    /* Custom Scrollbar */
+    /* Custom Scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -45,48 +49,114 @@
     }
     ::-webkit-scrollbar-thumb {
       background: #27272a;
-      border-radius: 3px;
+      border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #3f3f46;
     }
+
+    /* Edge Lighting Effect */
+    .edge-glow {
+      position: relative;
+    }
+    .edge-glow-active::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.6), rgba(168, 85, 247, 0.4), rgba(255, 255, 255, 0.1));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* Sidebar Dynamic Hover Width Transition */
+    .sidebar-expand {
+      width: 4.5rem;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sidebar-expand:hover {
+      width: 15rem;
+    }
+    .sidebar-expand:hover .sidebar-label {
+      opacity: 1;
+      visibility: visible;
+    }
+    .sidebar-label {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      white-space: nowrap;
+    }
+
+    /* Intro Overlay Transitions */
+    .intro-bar {
+      transition: height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
   </style>
 </head>
-<body class="bg-brand-950 text-zinc-100 font-sans antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+<body class="bg-brand-950 text-zinc-100 font-sans antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
+
+  <!-- AMBIENT LIGHTING BACKGROUND CANVAS -->
+  <div id="ambientLightingCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-0 transition-opacity duration-1000 bg-gradient-to-tr from-blue-950/20 via-purple-950/10 to-brand-950"></div>
+
+  <!-- EXACT INTRO SCREEN OVERLAY (Clickable to Skip at Any Moment) -->
+  <div id="introOverlay" onclick="skipIntro()" class="fixed inset-0 z-50 cursor-pointer overflow-hidden flex items-center justify-center">
+    <!-- Top & Bottom Black Shutter Bars for Horizontal Reveal -->
+    <div id="introBarTop" class="intro-bar fixed top-0 left-0 right-0 bg-black z-30 h-[50vh]"></div>
+    <div id="introBarBottom" class="intro-bar fixed bottom-0 left-0 right-0 bg-black z-30 h-[50vh]"></div>
+
+    <!-- Blur Background Layer over site -->
+    <div id="introBlurBackdrop" class="fixed inset-0 z-20 bg-black/40 backdrop-blur-md opacity-0 transition-opacity duration-500"></div>
+
+    <!-- Centered Logo FX (Stays strictly bounded inside letterbox FX) -->
+    <div id="introLogoContainer" class="relative z-40 flex flex-col items-center gap-2 transform scale-75 opacity-0 transition-all duration-700">
+      <div class="flex items-center gap-1.5">
+        <span class="bg-blue-600 text-white font-black text-3xl sm:text-5xl px-4 py-1.5 rounded-2xl tracking-tight shadow-2xl shadow-blue-900/60">
+          Movie
+        </span>
+        <span class="font-extrabold text-3xl sm:text-5xl tracking-tight text-white drop-shadow-lg">
+          Hub
+        </span>
+      </div>
+    </div>
+  </div>
 
   <!-- AUTO-UPDATE NOTIFICATION BANNER -->
-  <div id="updateBanner" class="hidden fixed bottom-5 left-5 z-50 bg-blue-600/90 backdrop-blur border border-blue-400/40 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-pulse">
+  <div id="updateBanner" class="hidden fixed bottom-5 left-5 z-50 bg-blue-600/90 backdrop-blur border border-blue-400/40 text-white px-4 py-3 rounded-card shadow-2xl flex items-center gap-3 animate-pulse">
     <i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i>
     <div>
       <p class="text-xs font-bold" id="updateBannerTitle">New Version Detected!</p>
-      <p class="text-[11px] text-blue-100" id="updateBannerSub">Updating to latest version...</p>
+      <p class="text-[11px] text-blue-100" id="updateBannerSub">Updating to v2.0.0...</p>
     </div>
   </div>
 
   <!-- LOGIN OVERLAY MODAL -->
   <div id="loginOverlay" class="fixed inset-0 bg-black/90 backdrop-blur-md z-40 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-card w-full max-w-md overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6">
       
       <div class="text-center space-y-2">
         <div class="inline-flex items-center cursor-pointer mb-1">
-          <span class="bg-blue-600 text-white font-black text-xl px-2.5 py-1 rounded-xl tracking-tight shadow-lg shadow-blue-900/50 mr-1.5">
+          <span class="bg-blue-600 text-white font-black text-xl px-2.5 py-1 rounded-card tracking-tight shadow-lg shadow-blue-900/50 mr-1.5">
             Movie
           </span>
           <span class="font-bold text-xl tracking-tight text-white">
             Hub
           </span>
         </div>
-        <h2 class="text-lg font-bold text-white" id="authHeaderTitle">Welcome to MovieHub</h2>
-        <p class="text-xs text-zinc-400" id="authHeaderSubtitle">Sign in with email verification or continue as guest.</p>
+        <h2 class="text-lg font-bold text-white" id="authHeaderTitle">Sign In to MovieHub</h2>
+        <p class="text-xs text-zinc-400" id="authHeaderSubtitle">Access watch history, account settings, and playlists.</p>
       </div>
 
       <div id="authStepMethods" class="space-y-4">
-        <div class="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs font-semibold">
-          <button id="tabAuthGoogle" type="button" onclick="switchAuthTab('google')" class="flex-1 py-2 rounded-lg bg-blue-600 text-white transition">
-            Email Verification
+        <div class="flex bg-zinc-950 p-1 rounded-card border border-zinc-800 text-xs font-semibold">
+          <button id="tabAuthGoogle" type="button" onclick="switchAuthTab('google')" class="flex-1 py-2 rounded-button bg-blue-600 text-white transition">
+            Email Security Code
           </button>
-          <button id="tabAuthUserPass" type="button" onclick="switchAuthTab('userpass')" class="flex-1 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 transition">
-            Password Sign-In
+          <button id="tabAuthUserPass" type="button" onclick="switchAuthTab('userpass')" class="flex-1 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition">
+            Password Access
           </button>
         </div>
 
@@ -95,15 +165,14 @@
             <label class="block text-xs font-semibold text-zinc-400 mb-1">Email Address *</label>
             <div class="relative">
               <i data-lucide="mail" class="w-4 h-4 absolute left-3 top-2.5 text-zinc-500"></i>
-              <input required id="loginGoogleEmail" type="email" placeholder="name@domain.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+              <input required id="loginGoogleEmail" type="email" placeholder="name@domain.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-card pl-9 pr-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
             </div>
-            <p class="text-[10px] text-zinc-500 mt-1">A 6-digit security code will be sent strictly to your email inbox.</p>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-zinc-400 mb-1">Full Name (Optional)</label>
-            <input id="loginGoogleName" type="text" placeholder="e.g. John Doe" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+            <label class="block text-xs font-semibold text-zinc-400 mb-1">Display Name (Optional)</label>
+            <input id="loginGoogleName" type="text" placeholder="e.g. Cinema Creator" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
           </div>
-          <button type="submit" id="sendEmailBtn" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-900/40 flex items-center justify-center gap-2">
+          <button type="submit" id="sendEmailBtn" class="w-full py-2.5 rounded-card bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-900/40 flex items-center justify-center gap-2">
             <i data-lucide="send" class="w-4 h-4"></i>
             <span>Send Verification Code</span>
           </button>
@@ -112,19 +181,19 @@
         <form id="formAuthUserPass" onsubmit="handleUserPassLogin(event)" class="hidden space-y-4">
           <div>
             <label class="block text-xs font-semibold text-zinc-400 mb-1">Username or Email *</label>
-            <input required id="loginUsername" type="text" placeholder="Username or email address" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+            <input required id="loginUsername" type="text" placeholder="Username" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-zinc-400 mb-1">Password *</label>
-            <input required id="loginPassword" type="password" placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+            <input required id="loginPassword" type="password" placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
           </div>
-          <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-900/40">
+          <button type="submit" class="w-full py-2.5 rounded-card bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-900/40">
             Sign In
           </button>
         </form>
 
-        <div class="pt-2 space-y-3 border-t border-zinc-800/80">
-          <button type="button" onclick="loginAsGuest()" class="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs transition border border-zinc-700/50 flex items-center justify-center gap-2">
+        <div class="pt-2 border-t border-zinc-800/80">
+          <button type="button" onclick="loginAsGuest()" class="w-full py-2.5 rounded-card bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs transition border border-zinc-700/50 flex items-center justify-center gap-2">
             <i data-lucide="user-check" class="w-4 h-4 text-zinc-400"></i>
             <span>Continue as Guest</span>
           </button>
@@ -132,21 +201,21 @@
       </div>
 
       <form id="authStepOtp" onsubmit="verifyOtpAndLogin(event)" class="hidden space-y-4">
-        <div class="bg-blue-600/10 border border-blue-500/20 p-3 rounded-xl text-xs text-blue-300">
-          Check your email inbox for <span id="sentEmailDisplay" class="font-bold text-white font-mono"></span> and enter the 6-digit code below.
+        <div class="bg-blue-600/10 border border-blue-500/20 p-3 rounded-card text-xs text-blue-300">
+          Enter code dispatched to <span id="sentEmailDisplay" class="font-bold text-white font-mono"></span>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Enter 6-Digit Code *</label>
-          <input required id="inputOtpCode" type="text" maxlength="6" placeholder="000000" autocomplete="one-time-code" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-center font-mono font-bold text-base text-blue-400 tracking-widest focus:outline-none focus:border-blue-500 transition" />
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">6-Digit Passcode *</label>
+          <input required id="inputOtpCode" type="text" maxlength="6" placeholder="000000" autocomplete="one-time-code" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2.5 text-center font-mono font-bold text-base text-blue-400 tracking-widest focus:outline-none focus:border-blue-500 transition" />
         </div>
 
         <div class="flex gap-2">
-          <button type="button" onclick="cancelOtpStep()" class="w-1/3 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold transition">
+          <button type="button" onclick="cancelOtpStep()" class="w-1/3 py-2.5 rounded-card bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold transition">
             Back
           </button>
-          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition shadow-lg shadow-blue-900/40">
-            Verify & Sign In
+          <button type="submit" class="flex-1 py-2.5 rounded-card bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition shadow-lg shadow-blue-900/40">
+            Verify & Authorize
           </button>
         </div>
       </form>
@@ -155,148 +224,141 @@
   </div>
 
   <!-- TOP NAVBAR -->
-  <header class="h-14 border-b border-zinc-800/80 bg-brand-900/90 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4">
+  <header class="h-14 border-b border-zinc-800/80 bg-brand-950/90 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="flex items-center cursor-pointer" onclick="showHome()">
-        <span class="bg-blue-600 text-white font-black text-lg px-2 py-0.5 rounded-lg tracking-tight shadow-md shadow-blue-900/50 mr-1">
+        <span class="bg-blue-600 text-white font-black text-lg px-2.5 py-1 rounded-card tracking-tight shadow-md shadow-blue-900/50 mr-1.5">
           Movie
         </span>
-        <span class="font-bold text-lg tracking-tight text-white">
+        <span class="font-extrabold text-lg tracking-tight text-white">
           Hub
         </span>
       </div>
-      <span id="navVersionBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700/50">
-        v1.4.0
+      <span id="navVersionBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-800">
+        v2.0.0
       </span>
     </div>
 
+    <!-- SEARCH BAR -->
     <div class="flex-1 max-w-xl mx-4 hidden sm:block">
       <div class="relative flex items-center">
         <i data-lucide="search" class="w-4 h-4 absolute left-3.5 text-zinc-500"></i>
         <input 
           type="text" 
           id="searchInput"
-          placeholder="Search movies..." 
+          placeholder="Search movies, creators, playlists..." 
           oninput="handleSearch(this.value)"
-          class="w-full bg-zinc-900/90 border border-zinc-800 rounded-full pl-10 pr-4 py-1.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition"
+          class="w-full bg-zinc-900 border border-zinc-800 rounded-full pl-10 pr-4 py-1.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition"
         />
       </div>
     </div>
 
+    <!-- HEADER ACTION BUTTONS -->
     <div class="flex items-center gap-3">
-      <button id="uploadBtn" onclick="openUploadModal()" class="hidden sm:flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-1.5 px-3.5 rounded-lg transition shadow-md shadow-blue-950">
-        <i data-lucide="upload" class="w-4 h-4"></i>
-        Upload Movie
+      <button id="uploadBtn" onclick="openUploadModal()" class="edge-glow edge-glow-active bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 px-3.5 rounded-card transition shadow-md shadow-blue-950 flex items-center gap-2">
+        <i data-lucide="video-plus" class="w-4 h-4"></i>
+        <span class="hidden sm:inline">Upload Movie</span>
       </button>
 
       <div id="authContainer" class="relative">
-        <button id="googleAuthBtn" onclick="toggleAuthDropdown()" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full py-1 px-3 text-xs font-medium transition">
+        <button id="googleAuthBtn" onclick="toggleAuthDropdown()" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full py-1 px-2.5 text-xs font-medium transition">
           <div id="userAvatar" class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
             ?
           </div>
-          <span id="userName" class="max-w-[120px] truncate text-zinc-300">Not Signed In</span>
+          <span id="userName" class="max-w-[100px] truncate text-zinc-300 hidden sm:inline">Not Signed In</span>
           <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-zinc-500"></i>
         </button>
 
-        <div id="authMenu" class="hidden absolute right-0 mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-3 z-50 space-y-2">
+        <div id="authMenu" class="hidden absolute right-0 mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-card shadow-2xl p-3 z-50 space-y-2">
           <div class="px-2 py-1 border-b border-zinc-800 pb-2">
             <p id="menuUserName" class="text-xs font-bold text-zinc-200 truncate">Guest</p>
             <p id="menuUserEmail" class="text-[11px] text-zinc-500 truncate">Not authenticated</p>
           </div>
-          <button onclick="openLoginOverlay()" class="w-full text-left px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-semibold text-xs transition">
-            Switch Account
+          <button onclick="switchNav('Account')" class="w-full text-left px-3 py-1.5 rounded-button bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 text-xs font-medium transition flex items-center gap-2">
+            <i data-lucide="user" class="w-4 h-4 text-blue-400"></i> Account & Settings
           </button>
-          <button id="signOutBtn" onclick="signOut()" class="w-full text-left px-3 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg transition">
-            Sign Out
+          <button onclick="openLoginOverlay()" class="w-full text-left px-3 py-1.5 rounded-button bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-semibold text-xs transition flex items-center gap-2">
+            <i data-lucide="log-in" class="w-4 h-4"></i> Switch Account
+          </button>
+          <button id="signOutBtn" onclick="signOut()" class="w-full text-left px-3 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-button transition flex items-center gap-2">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
           </button>
         </div>
       </div>
     </div>
   </header>
 
-  <div class="flex flex-1 overflow-hidden">
-    <!-- SIDEBAR -->
-    <aside class="w-56 bg-brand-950 border-r border-zinc-800/80 p-3 flex flex-col justify-between shrink-0 h-[calc(100vh-3.5rem)] sticky top-14">
-      <div class="space-y-1">
-        <a id="navHome" onclick="switchNav('Home')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-xs cursor-pointer transition">
-          <i data-lucide="home" class="w-4 h-4"></i>
-          <span>Home</span>
+  <!-- MAIN BODY LAYOUT WITH DYNAMIC HOVER SIDEBAR -->
+  <div class="flex flex-1 overflow-hidden relative z-10">
+    
+    <!-- DYNAMIC HOVER EXPANDABLE SIDEBAR -->
+    <aside class="sidebar-expand bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-transparent border-r border-zinc-800/60 p-3 flex flex-col justify-between shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 z-20 overflow-hidden">
+      <div class="space-y-1.5">
+        <a id="navHome" onclick="switchNav('Home')" class="flex items-center gap-3 px-3 py-2.5 rounded-card bg-blue-600 text-white font-semibold text-xs cursor-pointer transition">
+          <i data-lucide="home" class="w-5 h-5 shrink-0"></i>
+          <span class="sidebar-label">Home</span>
         </a>
-        <a id="navMovies" onclick="switchNav('Movies')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 font-medium text-xs cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition">
-          <i data-lucide="film" class="w-4 h-4"></i>
-          <span>Movies Directory</span>
+        <a id="navMovies" onclick="switchNav('Movies')" class="flex items-center gap-3 px-3 py-2.5 rounded-card text-zinc-400 font-semibold text-xs cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition">
+          <i data-lucide="film" class="w-5 h-5 shrink-0"></i>
+          <span class="sidebar-label">Movies Directory</span>
         </a>
-        <a id="navPlaylists" onclick="switchNav('Playlists')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 font-medium text-xs cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition">
-          <i data-lucide="list-video" class="w-4 h-4"></i>
-          <span>Playlists</span>
-        </a>
-        <a id="navSettings" onclick="switchNav('Settings')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 font-medium text-xs cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition">
-          <i data-lucide="settings" class="w-4 h-4"></i>
-          <span>Settings</span>
+        <a id="navAccount" onclick="switchNav('Account')" class="flex items-center gap-3 px-3 py-2.5 rounded-card text-zinc-400 font-semibold text-xs cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition">
+          <i data-lucide="user-circle" class="w-5 h-5 shrink-0"></i>
+          <span class="sidebar-label">Account</span>
         </a>
       </div>
 
-      <div class="pt-3 border-t border-zinc-800/80 text-[10px] text-zinc-500 space-y-1">
+      <div class="pt-3 border-t border-zinc-800/80 text-[10px] text-zinc-500 space-y-1 sidebar-label">
         <div class="flex items-center justify-between">
-          <span>Client Version:</span>
-          <span id="sidebarVersionVal" class="font-mono text-zinc-400">v1.4.0</span>
+          <span>Version:</span>
+          <span id="sidebarVersionVal" class="font-mono text-zinc-400">v2.0.0</span>
         </div>
         <div class="flex items-center justify-between">
-          <span>Status:</span>
-          <span id="versionStatusText" class="text-emerald-400 font-semibold">Latest</span>
+          <span>Engine:</span>
+          <span class="text-blue-400 font-semibold">v2.0 Heavy</span>
         </div>
       </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto bg-brand-950 p-6 space-y-8" id="mainContent">
+    <!-- CONTENT VIEW CONTAINER -->
+    <main class="flex-1 overflow-y-auto bg-brand-950 p-4 sm:p-6 space-y-8" id="mainContent">
       
-      <!-- CUSTOM HOME VIEW -->
+      <!-- HOME DASHBOARD VIEW -->
       <div id="homeView" class="space-y-8">
-        <div id="homeHeroContainer" class="relative rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-900 min-h-[280px] sm:min-h-[340px] flex items-end p-6 sm:p-10 shadow-2xl">
+        <!-- SPOTLIGHT HERO BANNER -->
+        <div id="homeHeroContainer" class="relative rounded-card overflow-hidden border border-zinc-800 bg-zinc-900 min-h-[280px] sm:min-h-[340px] flex items-end p-6 sm:p-10 shadow-2xl">
           <div id="homeHeroBg" class="absolute inset-0 bg-cover bg-center transition-all duration-500"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/70 to-transparent"></div>
           
           <div class="relative z-10 max-w-2xl space-y-3" id="homeHeroContent">
             <div class="inline-flex items-center gap-2 bg-blue-600/90 border border-blue-400/30 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full backdrop-blur">
-              <i data-lucide="sparkles" class="w-3 h-3"></i> Featured Spotlight
+              <i data-lucide="sparkles" class="w-3 h-3"></i> Cinema Spotlight
             </div>
             <h1 id="heroTitle" class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-snug">
-              Welcome to MovieHub
+              Welcome to MovieHub v2.0.0
             </h1>
             <p id="heroDesc" class="text-xs sm:text-sm text-zinc-300 line-clamp-2 leading-relaxed">
-              Explore user-submitted movies, stream high quality video, and organize your favorite titles into custom playlists.
+              Experience custom FPS & Quality playback, auto-captions, account hubs, and movie uploads.
             </p>
             <div class="flex flex-wrap gap-3 pt-2" id="heroActions">
-              <button onclick="openUploadModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center gap-2 transition">
-                <i data-lucide="upload" class="w-4 h-4"></i> Upload Movie
+              <button onclick="openUploadModal()" class="edge-glow edge-glow-active bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-card font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center gap-2 transition">
+                <i data-lucide="video" class="w-4 h-4"></i> Upload Movie
               </button>
             </div>
           </div>
         </div>
 
+        <!-- RECENTLY PUBLISHED ROW -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> Recently Added
+              <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> Recently Published
             </h2>
             <button onclick="switchNav('Movies')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 transition">
-              See All <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+              View All Directory <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
             </button>
           </div>
           <div id="homeRecentRow" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <i data-lucide="list-video" class="w-4 h-4 text-blue-500"></i> Your Playlists
-            </h2>
-            <button onclick="openCreatePlaylistModal()" class="text-xs bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1.5 transition">
-              <i data-lucide="plus" class="w-3.5 h-3.5 text-blue-400"></i> New Playlist
-            </button>
-          </div>
-          <div id="homePlaylistsRow" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           </div>
         </div>
       </div>
@@ -306,17 +368,14 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
           <div>
             <h1 class="text-xl font-bold text-white">Movies Directory</h1>
-            <p class="text-xs text-zinc-400 mt-1">Browse and filter all uploaded movies on MovieHub.</p>
+            <p class="text-xs text-zinc-400 mt-1">Browse all high-definition movies and streams.</p>
           </div>
 
           <div class="flex flex-wrap gap-2 text-xs">
-            <button onclick="setMovieFilter('all')" id="filterAll" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition">
+            <button onclick="setMovieFilter('all')" id="filterAll" class="px-3 py-1.5 rounded-card bg-blue-600 text-white font-semibold transition">
               All Movies
             </button>
-            <button onclick="setMovieFilter('drive')" id="filterDrive" class="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition">
-              Embed Streams
-            </button>
-            <button onclick="setMovieFilter('popular')" id="filterPopular" class="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition">
+            <button onclick="setMovieFilter('popular')" id="filterPopular" class="px-3 py-1.5 rounded-card bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition">
               Most Viewed
             </button>
           </div>
@@ -326,113 +385,174 @@
         </div>
       </div>
 
-      <!-- PLAYLISTS VIEW -->
-      <div id="playlistsView" class="hidden space-y-6">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
-          <div>
-            <h1 class="text-xl font-bold text-white">Your Playlists</h1>
-            <p class="text-xs text-zinc-400 mt-1">Organize movies into custom collections.</p>
+      <!-- ACCOUNT & SETTINGS PAGE -->
+      <div id="accountView" class="hidden space-y-6 max-w-6xl mx-auto">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-card p-6 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden">
+          <div id="channelAvatarLg" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-blue-600 text-white font-extrabold text-3xl flex items-center justify-center border-4 border-zinc-800 shrink-0">
+            ?
           </div>
-          <button onclick="openCreatePlaylistModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow-lg shadow-blue-900/40 flex items-center gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i> Create Playlist
+          <div class="space-y-1 text-center sm:text-left flex-1">
+            <h1 id="channelNameHeader" class="text-2xl font-extrabold text-white">User Name</h1>
+            <p id="channelEmailHeader" class="text-xs font-mono text-zinc-400">user@domain.com</p>
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 text-xs">
+              <span id="channelRoleBadge" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+                Member
+              </span>
+              <span class="text-zinc-500">•</span>
+              <span id="channelWatchCount" class="text-zinc-400 font-mono text-[11px]">0 videos watched</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACCOUNT TAB NAVIGATION BAR -->
+        <div class="flex bg-zinc-900 p-1.5 rounded-card border border-zinc-800 text-xs font-semibold overflow-x-auto no-scrollbar gap-1">
+          <button onclick="switchAccountTab('history')" id="accountTabHistory" class="px-4 py-2 rounded-button bg-blue-600 text-white transition shrink-0 flex items-center gap-1.5">
+            <i data-lucide="history" class="w-4 h-4"></i> Watch History
+          </button>
+          <button onclick="switchAccountTab('playlists')" id="accountTabPlaylists" class="px-4 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition shrink-0 flex items-center gap-1.5">
+            <i data-lucide="list-video" class="w-4 h-4"></i> Playlists
+          </button>
+          <button onclick="switchAccountTab('myuploads')" id="accountTabMyUploads" class="px-4 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition shrink-0 flex items-center gap-1.5">
+            <i data-lucide="clapperboard" class="w-4 h-4"></i> Your Published Movies
+          </button>
+          <button onclick="switchAccountTab('settings')" id="accountTabSettings" class="px-4 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition shrink-0 flex items-center gap-1.5">
+            <i data-lucide="settings" class="w-4 h-4"></i> Settings
           </button>
         </div>
 
-        <div id="playlistsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        </div>
-
-        <div id="playlistDetailContainer" class="hidden space-y-6 pt-4 border-t border-zinc-800">
-          <div class="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-            <div class="space-y-1">
-              <span class="text-[10px] uppercase tracking-wider text-blue-400 font-bold">Playlist</span>
-              <h2 id="playlistDetailTitle" class="text-2xl font-bold text-white">Playlist Title</h2>
-              <p id="playlistDetailDesc" class="text-xs text-zinc-400">Description</p>
-              <p id="playlistDetailMeta" class="text-[11px] text-zinc-500 font-mono pt-1">0 videos</p>
-            </div>
-            <div class="flex gap-2">
-              <button id="playlistPlayAllBtn" onclick="playCurrentPlaylist()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-blue-900/40">
-                <i data-lucide="play" class="w-4 h-4 fill-white"></i> Play All
-              </button>
-              <button id="deletePlaylistBtn" onclick="deleteCurrentPlaylist()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/20 px-3 py-2 rounded-xl text-xs font-semibold transition">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
+        <!-- ACCOUNT SUB-VIEWS -->
+        <div id="accountSubHistory" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">Recently Watched Movies</h3>
+            <button onclick="clearWatchHistory()" class="text-xs text-rose-400 hover:underline">Clear History</button>
           </div>
-
-          <div id="playlistMoviesList" class="space-y-3">
+          <div id="historyGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           </div>
         </div>
-      </div>
 
-      <!-- SETTINGS VIEW -->
-      <div id="settingsView" class="hidden max-w-2xl mx-auto py-8 space-y-6">
-        <div>
-          <h1 class="text-xl font-bold text-white">Application Settings</h1>
-          <p class="text-xs text-zinc-400 mt-1">Manage your account and client updates.</p>
-        </div>
-
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
-            <i data-lucide="cpu" class="w-4 h-4 text-blue-500"></i> Client & Server Version Control
-          </h2>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-xs">
-            <div>
-              <p class="text-[11px] text-zinc-500">Current Client Version</p>
-              <p id="settingsClientVersion" class="font-mono font-bold text-zinc-200">v1.4.0</p>
-            </div>
-            <div>
-              <p class="text-[11px] text-zinc-500">Server Live Version</p>
-              <p id="settingsServerVersion" class="font-mono font-bold text-emerald-400">v1.4.0 (Verified)</p>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between pt-1">
-            <p class="text-xs text-zinc-400">MovieHub automatically checks for server updates every 30 seconds.</p>
-            <button onclick="checkForUpdates(true)" id="checkUpdateBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition shrink-0 flex items-center gap-1.5">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-              Check For Updates
+        <div id="accountSubPlaylists" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">Saved Playlists</h3>
+            <button onclick="openCreatePlaylistModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-card font-semibold">
+              + New Playlist
             </button>
           </div>
+          <div id="accountPlaylistsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          </div>
         </div>
 
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Account</h2>
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-            <div>
-              <p class="text-xs font-semibold text-zinc-200" id="settingsEmail">Not Signed In</p>
-              <p class="text-[11px] text-zinc-500">Current Session</p>
-            </div>
-            <span id="settingsBadge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-400">
-              Logged Out
-            </span>
+        <div id="accountSubMyUploads" class="hidden space-y-4">
+          <h3 class="text-sm font-bold text-white">Movies Published by You</h3>
+          <div id="accountMyUploadsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          </div>
+        </div>
+
+        <!-- INTEGRATED SETTINGS SUB-VIEW -->
+        <div id="accountSubSettings" class="hidden space-y-6">
+          <div class="flex bg-zinc-900 p-1 rounded-card border border-zinc-800 text-xs font-semibold">
+            <button onclick="switchSettingsTab('general')" id="setTabGeneral" class="flex-1 py-2 rounded-button bg-blue-600 text-white transition">
+              General
+            </button>
+            <button onclick="switchSettingsTab('advanced')" id="setTabAdvanced" class="flex-1 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition">
+              Advanced & Update Logs
+            </button>
+            <button onclick="switchSettingsTab('extras')" id="setTabExtras" class="flex-1 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition">
+              Extras & Lighting
+            </button>
           </div>
 
-          <div>
-            <button onclick="signOut()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/20 transition">
+          <!-- GENERAL TAB -->
+          <div id="setSubGeneral" class="bg-zinc-900 border border-zinc-800 rounded-card p-5 space-y-4">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Account Session</h2>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div>
+                <p class="text-xs font-semibold text-zinc-200" id="settingsEmail">Not Signed In</p>
+                <p class="text-[11px] text-zinc-500">Active Authorized User</p>
+              </div>
+              <span id="settingsBadge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-400">
+                Logged Out
+              </span>
+            </div>
+            <button onclick="signOut()" class="px-4 py-2 rounded-card text-xs font-semibold bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/20 transition">
               Sign Out
             </button>
           </div>
-        </div>
 
-        <div id="ownerModPanel" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between">
+          <!-- ADVANCED TAB -->
+          <div id="setSubAdvanced" class="hidden space-y-4">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-card p-5 space-y-4">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-2">
+                <i data-lucide="cpu" class="w-4 h-4"></i> Version Control Engine
+              </h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-950 p-3 rounded-card border border-zinc-800 text-xs">
+                <div>
+                  <p class="text-[11px] text-zinc-500">Client Version</p>
+                  <p id="settingsClientVersion" class="font-mono font-bold text-zinc-200">v2.0.0</p>
+                </div>
+                <div>
+                  <p class="text-[11px] text-zinc-500">Server Status</p>
+                  <p id="settingsServerVersion" class="font-mono font-bold text-emerald-400">v2.0.0 (Latest)</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <p class="text-xs text-zinc-400">Polled background version synchronization every 30 seconds.</p>
+                <button onclick="checkForUpdates(true)" id="checkUpdateBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-card text-xs font-semibold transition shrink-0 flex items-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Check For Updates
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-zinc-900 border border-zinc-800 rounded-card p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+                  <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Release & Update Log
+                </h2>
+                <span class="text-[10px] font-mono text-zinc-500">v2.0.0</span>
+              </div>
+              <textarea id="updateLogEditor" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-card p-3 font-mono text-xs text-zinc-300 focus:outline-none focus:border-blue-500 transition leading-relaxed"></textarea>
+              <div class="flex justify-end">
+                <button onclick="saveUpdateLogs()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-button text-xs font-semibold">
+                  Save Log Edits
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- EXTRAS TAB -->
+          <div id="setSubExtras" class="hidden space-y-4">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-card p-5 space-y-4">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                <i data-lucide="sun" class="w-4 h-4"></i> Realistic Lighting Controls
+              </h2>
+              <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <div>
+                  <p class="text-xs font-semibold text-zinc-200">Ambient Background Glow</p>
+                  <p class="text-[11px] text-zinc-500">Dynamically adapts background aura based on lighting</p>
+                </div>
+                <input type="checkbox" id="toggleAmbientGlow" onchange="toggleAmbientLighting(this.checked)" class="w-4 h-4 accent-blue-600 rounded cursor-pointer" />
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-semibold text-zinc-200">Action Button Edge Glow</p>
+                  <p class="text-[11px] text-zinc-500">Applies realistic spectral light border on key UI buttons</p>
+                </div>
+                <input type="checkbox" id="toggleEdgeGlow" checked onchange="toggleEdgeGlowFX(this.checked)" class="w-4 h-4 accent-blue-600 rounded cursor-pointer" />
+              </div>
+            </div>
+          </div>
+
+          <!-- MODERATOR PANEL -->
+          <div id="ownerModPanel" class="bg-zinc-900 border border-zinc-800 rounded-card p-5 space-y-4">
             <h2 class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
               <i data-lucide="shield" class="w-4 h-4"></i> Manage Moderators
             </h2>
-          </div>
-          <p class="text-xs text-zinc-400">Grant or revoke permissions for users allowed to upload movies.</p>
-
-          <form onsubmit="handleAddModerator(event)" class="flex gap-2">
-            <input required id="newModEmail" type="email" placeholder="Enter user email (e.g. user@gmail.com)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shrink-0">
-              Add Moderator
-            </button>
-          </form>
-
-          <div class="space-y-2 pt-2">
-            <div id="moderatorsList" class="space-y-2">
-            </div>
+            <form onsubmit="handleAddModerator(event)" class="flex gap-2">
+              <input required id="newModEmail" type="email" placeholder="Moderator email address" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+              <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-card text-xs font-semibold transition shrink-0">
+                Grant Moderator
+              </button>
+            </form>
+            <div id="moderatorsList" class="space-y-2 pt-2"></div>
           </div>
         </div>
       </div>
@@ -440,11 +560,65 @@
       <!-- WATCH VIEW -->
       <div id="watchView" class="hidden flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
         <div class="flex-1">
-          <div class="w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/80 aspect-video relative group">
-            <div id="playerContainer" class="w-full h-full">
-              <video id="mainPlayer" class="w-full h-full object-contain" controls autoplay></video>
+          <div class="w-full bg-black rounded-card overflow-hidden shadow-2xl border border-zinc-800 aspect-video relative group" id="customPlayerWrapper">
+            
+            <div id="playerContainer" class="w-full h-full relative">
+              <video id="mainPlayer" class="w-full h-full object-contain" crossorigin="anonymous">
+                <track id="mainPlayerSubtitles" kind="subtitles" srclang="en" label="English Auto-Captions" default />
+              </video>
               <iframe id="googleDriveIframe" class="w-full h-full border-0 hidden" allow="autoplay; fullscreen" allowfullscreen></iframe>
             </div>
+
+            <!-- CUSTOM VIDEO PLAYER CONTROL OVERLAY -->
+            <div id="customControlsBar" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+              <input type="range" id="playerScrubber" value="0" min="0" max="100" class="w-full h-1 bg-zinc-700 accent-blue-600 rounded-lg cursor-pointer" oninput="seekVideo(this.value)" />
+              
+              <div class="flex items-center justify-between text-xs text-white">
+                <div class="flex items-center gap-3">
+                  <button onclick="toggleCustomPlay()" id="playPauseBtn" class="hover:text-blue-400 transition">
+                    <i data-lucide="play" class="w-5 h-5 fill-white"></i>
+                  </button>
+                  <div class="flex items-center gap-1.5 font-mono text-[11px] text-zinc-300">
+                    <span id="playerCurrentTime">00:00</span> / <span id="playerDuration">00:00</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <button onclick="toggleCaptions()" id="ccToggleBtn" class="hover:text-blue-400 font-extrabold text-[11px] px-1.5 py-0.5 border border-white/40 rounded transition" title="Toggle Captions">
+                    CC
+                  </button>
+
+                  <div class="relative">
+                    <button onclick="toggleDropdown('qualityDropdown')" class="text-[11px] font-mono hover:text-blue-400 flex items-center gap-1 bg-zinc-900/80 px-2 py-1 rounded border border-zinc-700">
+                      <span id="currentQualityLabel">1080p</span> <i data-lucide="chevron-up" class="w-3 h-3"></i>
+                    </button>
+                    <div id="qualityDropdown" class="hidden absolute bottom-8 right-0 bg-zinc-900 border border-zinc-800 rounded-card p-2 w-28 text-[11px] space-y-1 shadow-2xl z-40">
+                      <button onclick="setQuality('2160p (4K)')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">2160p (4K)</button>
+                      <button onclick="setQuality('1080p')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">1080p HD</button>
+                      <button onclick="setQuality('720p')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">720p</button>
+                      <button onclick="setQuality('480p')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">480p</button>
+                    </div>
+                  </div>
+
+                  <div class="relative">
+                    <button onclick="toggleDropdown('fpsDropdown')" class="text-[11px] font-mono hover:text-blue-400 flex items-center gap-1 bg-zinc-900/80 px-2 py-1 rounded border border-zinc-700">
+                      <span id="currentFpsLabel">60fps</span> <i data-lucide="chevron-up" class="w-3 h-3"></i>
+                    </button>
+                    <div id="fpsDropdown" class="hidden absolute bottom-8 right-0 bg-zinc-900 border border-zinc-800 rounded-card p-2 w-24 text-[11px] space-y-1 shadow-2xl z-40">
+                      <button onclick="setFPS('60fps')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">60 fps</button>
+                      <button onclick="setFPS('50fps')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">50 fps</button>
+                      <button onclick="setFPS('30fps')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">30 fps</button>
+                      <button onclick="setFPS('24fps')" class="w-full text-left px-2 py-1 hover:bg-zinc-800 rounded text-zinc-200">24 fps (Cinema)</button>
+                    </div>
+                  </div>
+
+                  <button onclick="toggleFullScreen()" class="hover:text-blue-400 transition">
+                    <i data-lucide="maximize" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div class="mt-4 space-y-3">
@@ -462,15 +636,10 @@
               </div>
 
               <div class="flex items-center gap-2">
-                <div class="flex items-center bg-zinc-900 border border-zinc-800 rounded-full overflow-hidden">
-                  <button id="likeBtn" onclick="toggleLike()" class="flex items-center gap-1.5 px-4 py-2 hover:bg-zinc-800 text-xs font-medium text-zinc-300 border-r border-zinc-800 transition">
-                    <i data-lucide="thumbs-up" class="w-4 h-4"></i>
-                    <span id="watchLikes">0</span>
-                  </button>
-                  <button class="px-3 py-2 hover:bg-zinc-800 text-xs text-zinc-400 transition">
-                    <i data-lucide="thumbs-down" class="w-4 h-4"></i>
-                  </button>
-                </div>
+                <button id="likeBtn" onclick="toggleLike()" class="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-medium text-zinc-300 transition hover:bg-zinc-800">
+                  <i data-lucide="thumbs-up" class="w-4 h-4"></i>
+                  <span id="watchLikes">0</span>
+                </button>
 
                 <button onclick="openSaveToPlaylistModal()" class="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full text-xs font-medium text-zinc-300 transition">
                   <i data-lucide="plus-square" class="w-4 h-4 text-blue-400"></i>
@@ -478,21 +647,18 @@
                 </button>
 
                 <button onclick="shareMovie()" class="flex items-center gap-1.5 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full text-xs font-medium text-zinc-300 transition">
-                  <i data-lucide="share-2" class="w-4 h-4"></i>
-                  Share
+                  <i data-lucide="share-2" class="w-4 h-4"></i> Share
                 </button>
                 <button id="editWatchMovieBtn" onclick="openEditWatchMovie()" class="hidden flex items-center gap-1.5 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-full text-xs font-medium transition">
-                  <i data-lucide="edit-3" class="w-4 h-4"></i>
-                  Edit
+                  <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Movie
                 </button>
                 <button id="deleteWatchMovieBtn" onclick="confirmDeleteCurrentMovie()" class="hidden flex items-center gap-1.5 px-4 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/20 rounded-full text-xs font-medium transition">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                  Delete
+                  <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
                 </button>
               </div>
             </div>
 
-            <div class="bg-zinc-900/70 border border-zinc-800/60 rounded-xl p-4 text-xs space-y-2">
+            <div class="bg-zinc-900/70 border border-zinc-800/60 rounded-card p-4 text-xs space-y-2">
               <div class="flex items-center gap-3 font-semibold text-zinc-400">
                 <span id="watchViews">0 views</span>
                 <span id="watchDate">Recently uploaded</span>
@@ -501,45 +667,123 @@
                 Movie description goes here...
               </p>
             </div>
-
-            <div class="mt-6 space-y-4">
-              <h3 class="text-sm font-bold text-zinc-200 flex items-center gap-2">
-                <span>Comments</span>
-                <span id="commentCount" class="text-xs text-zinc-500 font-normal">0</span>
-              </h3>
-
-              <div class="flex gap-3">
-                <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
-                  U
-                </div>
-                <div class="flex-1 flex gap-2">
-                  <input id="commentInput" type="text" placeholder="Add a public comment..." class="w-full bg-transparent border-b border-zinc-800 focus:border-blue-500 text-xs py-1.5 text-zinc-200 focus:outline-none transition" />
-                  <button onclick="postComment()" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition shrink-0">Comment</button>
-                </div>
-              </div>
-
-              <div id="commentsList" class="space-y-3 pt-2">
-              </div>
-            </div>
           </div>
         </div>
 
         <div class="w-full lg:w-80 shrink-0 space-y-3">
           <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">Up Next</h2>
-          <div id="upNextList" class="space-y-3">
-          </div>
+          <div id="upNextList" class="space-y-3"></div>
         </div>
       </div>
 
     </main>
   </div>
 
+  <!-- MULTI-STEP UPLOAD & EDIT MODAL -->
+  <div id="uploadModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-card w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/80 shrink-0">
+        <div class="flex items-center gap-2">
+          <i data-lucide="clapperboard" class="w-5 h-5 text-blue-500"></i>
+          <h2 class="text-sm font-bold text-zinc-100" id="studioModalTitle">Upload New Movie</h2>
+        </div>
+        <button onclick="closeUploadModal()" class="text-zinc-500 hover:text-zinc-300">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex border-b border-zinc-800 text-xs font-semibold bg-zinc-950/40 shrink-0">
+        <button type="button" id="studioStep1" onclick="switchStudioStep(1)" class="flex-1 py-2.5 text-center border-b-2 border-blue-600 text-blue-400">
+          1. Details & Source
+        </button>
+        <button type="button" id="studioStep2" onclick="switchStudioStep(2)" class="flex-1 py-2.5 text-center border-b-2 border-transparent text-zinc-500">
+          2. Auto-Captions & Elements
+        </button>
+      </div>
+
+      <form id="uploadForm" onsubmit="handleStudioSubmit(event)" class="p-6 overflow-y-auto space-y-4 flex-1">
+        
+        <div id="studioStep1Content" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-zinc-400 mb-1">Movie Title *</label>
+            <input required id="uploadTitle" type="text" placeholder="e.g. Inception 4K Extended Trailer" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-zinc-400">Video Source *</label>
+            <div class="flex gap-2">
+              <button type="button" id="tabFile" onclick="setSourceTab('file')" class="flex-1 py-2 px-3 rounded-button text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition">
+                Upload File (IndexedDB)
+              </button>
+              <button type="button" id="tabDrive" onclick="setSourceTab('drive')" class="flex-1 py-2 px-3 rounded-button text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition">
+                Google Drive / YouTube Link
+              </button>
+            </div>
+          </div>
+
+          <div id="fileUploadContainer">
+            <label class="block text-xs font-semibold text-zinc-400 mb-1">Select Local File *</label>
+            <input id="uploadFile" type="file" accept="video/*" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-button file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer" />
+          </div>
+
+          <div id="driveLinkContainer" class="hidden space-y-2">
+            <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive or YouTube URL *</label>
+            <input id="uploadDriveUrl" type="url" placeholder="Paste Google Drive share link (file/d/... or open?id=...) or YouTube URL" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+            <p class="text-[10px] text-zinc-500">Supports all normal Google Drive sharing links, open links, and folder links automatically.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-zinc-400 mb-1">Thumbnail Poster (Optional)</label>
+            <input id="uploadThumbnail" type="url" placeholder="Leave blank to auto-generate poster frame from video" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-zinc-400 mb-1">Description</label>
+            <textarea id="uploadDescription" rows="3" placeholder="Provide movie synopsis..." class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition"></textarea>
+          </div>
+        </div>
+
+        <div id="studioStep2Content" class="hidden space-y-4">
+          <div class="bg-blue-600/10 border border-blue-500/20 p-4 rounded-card space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-400">
+              <i data-lucide="sparkles" class="w-4 h-4"></i> Auto-Generated AI Closed Captions
+            </div>
+            <p class="text-xs text-zinc-300 leading-relaxed">
+              MovieHub automatically compiles synchronized VTT closed captions derived from title keywords and description metadata upon publishing.
+            </p>
+          </div>
+          
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-zinc-400">Default Quality Setting</label>
+            <select id="uploadDefaultQuality" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200">
+              <option value="1080p">1080p HD (Recommended)</option>
+              <option value="2160p (4K)">2160p (4K Ultra HD)</option>
+              <option value="720p">720p</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-zinc-800 flex justify-between items-center shrink-0">
+          <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-card text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition">Cancel</button>
+          <div class="flex gap-2">
+            <button type="button" id="studioBackBtn" onclick="switchStudioStep(1)" class="hidden px-4 py-2 rounded-card text-xs font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition">Back</button>
+            <button type="button" id="studioNextBtn" onclick="switchStudioStep(2)" class="px-4 py-2 rounded-card text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition">Next Step</button>
+            <button type="submit" id="submitBtn" class="hidden edge-glow edge-glow-active px-5 py-2 rounded-card text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/40 transition">
+              Publish Movie
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- CREATE PLAYLIST MODAL -->
   <div id="createPlaylistModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-card w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="plus-square" class="w-4 h-4 text-blue-500"></i> Create New Playlist
+          <i data-lucide="plus-square" class="w-4 h-4 text-blue-500"></i> Create Playlist
         </h3>
         <button onclick="closeCreatePlaylistModal()" class="text-zinc-500 hover:text-zinc-300">
           <i data-lucide="x" class="w-4 h-4"></i>
@@ -549,15 +793,11 @@
       <form onsubmit="handleCreatePlaylist(event)" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">Playlist Name *</label>
-          <input required id="newPlaylistTitle" type="text" placeholder="e.g. My Favorites" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Description (Optional)</label>
-          <textarea id="newPlaylistDesc" rows="2" placeholder="Collection details..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition"></textarea>
+          <input required id="newPlaylistTitle" type="text" placeholder="Favorites" class="w-full bg-zinc-950 border border-zinc-800 rounded-card px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
         </div>
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeCreatePlaylistModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition">Create</button>
+          <button type="button" onclick="closeCreatePlaylistModal()" class="px-3 py-1.5 rounded-card text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-card text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition">Create</button>
         </div>
       </form>
     </div>
@@ -565,185 +805,57 @@
 
   <!-- SAVE TO PLAYLIST MODAL -->
   <div id="savePlaylistModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-card w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="list-plus" class="w-4 h-4 text-blue-500"></i> Save Movie to Playlist
+          <i data-lucide="list-plus" class="w-4 h-4 text-blue-500"></i> Save to Playlist
         </h3>
         <button onclick="closeSavePlaylistModal()" class="text-zinc-500 hover:text-zinc-300">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-
-      <div id="savePlaylistOptions" class="space-y-2 max-h-60 overflow-y-auto">
-      </div>
-
+      <div id="savePlaylistOptions" class="space-y-2 max-h-60 overflow-y-auto"></div>
       <div class="pt-2 border-t border-zinc-800 flex justify-between items-center">
         <button onclick="openCreatePlaylistModal()" class="text-xs text-blue-400 font-semibold hover:underline flex items-center gap-1">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Create New Playlist
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Create Playlist
         </button>
-        <button onclick="closeSavePlaylistModal()" class="px-3 py-1 rounded-xl text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">Done</button>
+        <button onclick="closeSavePlaylistModal()" class="px-3 py-1 rounded-card text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">Done</button>
       </div>
     </div>
   </div>
 
   <!-- DELETE CONFIRMATION MODAL -->
   <div id="deleteModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4 text-center">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-card w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4 text-center">
       <div class="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto">
         <i data-lucide="trash-2" class="w-6 h-6"></i>
       </div>
       <div>
         <h3 class="text-base font-bold text-white">Delete Movie?</h3>
-        <p class="text-xs text-zinc-400 mt-1">Are you sure you want to delete this movie? This action cannot be undone.</p>
+        <p class="text-xs text-zinc-400 mt-1">This action removes the movie permanently.</p>
       </div>
       <div class="flex gap-3 pt-2">
-        <button onclick="closeDeleteModal()" class="flex-1 py-2 rounded-xl text-xs font-semibold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition">
+        <button onclick="closeDeleteModal()" class="flex-1 py-2 rounded-card text-xs font-semibold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition">
           Cancel
         </button>
-        <button onclick="executeDeleteMovie()" class="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 transition shadow-lg shadow-rose-900/40">
+        <button onclick="executeDeleteMovie()" class="flex-1 py-2 rounded-card text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 transition shadow-lg shadow-rose-900/40">
           Delete
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MOVIE EDIT MODAL -->
-  <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
-        <div class="flex items-center gap-2">
-          <i data-lucide="edit-3" class="w-5 h-5 text-blue-500"></i>
-          <h2 class="text-sm font-bold text-zinc-100">Edit Movie Details</h2>
-        </div>
-        <button onclick="closeEditModal()" class="text-zinc-500 hover:text-zinc-300">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <form id="editForm" onsubmit="handleMovieEdit(event)" class="p-6 space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Movie Title *</label>
-          <input required id="editTitle" type="text" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-xs font-semibold text-zinc-400">Video Source *</label>
-          <div class="flex gap-2">
-            <button type="button" id="editTabFile" onclick="setEditSourceTab('file')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition">
-              Replace Video File
-            </button>
-            <button type="button" id="editTabDrive" onclick="setEditSourceTab('drive')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition">
-              Link / Embed Stream
-            </button>
-          </div>
-        </div>
-
-        <div id="editFileUploadContainer">
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Select New Video File (Optional)</label>
-          <input id="editFile" type="file" accept="video/*" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
-          <p class="text-[10px] text-zinc-500 mt-1">Leave empty to keep existing video file.</p>
-        </div>
-
-        <div id="editDriveLinkContainer" class="hidden space-y-2">
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive / YouTube / Direct Link *</label>
-          <input id="editDriveUrl" type="url" placeholder="https://drive.google.com/... or https://youtube.com/watch?v=..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Thumbnail (Optional)</label>
-          <input id="editThumbnail" type="url" placeholder="Paste image URL... Leave blank to auto-generate from video." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Description</label>
-          <textarea id="editDescription" rows="3" placeholder="Provide movie details..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition"></textarea>
-        </div>
-
-        <div class="pt-2 flex justify-end gap-3">
-          <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition">Cancel</button>
-          <button type="submit" id="editSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30 transition flex items-center gap-2">
-            <span>Save Changes</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MOVIE UPLOAD MODAL -->
-  <div id="uploadModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
-        <div class="flex items-center gap-2">
-          <i data-lucide="video" class="w-5 h-5 text-blue-500"></i>
-          <h2 class="text-sm font-bold text-zinc-100">Upload New Movie</h2>
-        </div>
-        <button onclick="closeUploadModal()" class="text-zinc-500 hover:text-zinc-300">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <form id="uploadForm" onsubmit="handleMovieUpload(event)" class="p-6 space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Movie Title *</label>
-          <input required id="uploadTitle" type="text" placeholder="e.g. A Minecraft Movie Teaser" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-xs font-semibold text-zinc-400">Video Source *</label>
-          <div class="flex gap-2">
-            <button type="button" id="tabFile" onclick="setSourceTab('file')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition">
-              Upload Video File
-            </button>
-            <button type="button" id="tabDrive" onclick="setSourceTab('drive')" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition">
-              Link (Drive / YouTube / Web)
-            </button>
-          </div>
-        </div>
-
-        <div id="fileUploadContainer">
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Select Video File *</label>
-          <input id="uploadFile" type="file" accept="video/*" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
-          <p class="text-[10px] text-zinc-500 mt-1">Uploaded video files are stored permanently in your browser's IndexedDB storage.</p>
-        </div>
-
-        <div id="driveLinkContainer" class="hidden space-y-2">
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Google Drive / YouTube / Direct Stream URL *</label>
-          <input id="uploadDriveUrl" type="url" placeholder="https://drive.google.com/file/d/... or https://youtube.com/watch?v=..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-          <p class="text-[10px] text-zinc-500">Paste any shareable Google Drive, YouTube, or direct MP4 stream URL.</p>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Custom Thumbnail (Optional)</label>
-          <input id="uploadThumbnail" type="url" placeholder="Leave blank to auto-generate thumbnail from video file or Google Drive..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Description</label>
-          <textarea id="uploadDescription" rows="3" placeholder="Provide movie details..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 transition"></textarea>
-        </div>
-
-        <div class="pt-2 flex justify-end gap-3">
-          <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition">Cancel</button>
-          <button type="submit" id="submitBtn" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30 transition flex items-center gap-2">
-            <span>Publish Movie</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <video id="hiddenThumbVideo" class="hidden" preload="metadata" muted crossorigin="anonymous"></video>
   <canvas id="hiddenThumbCanvas" class="hidden"></canvas>
 
-  <div id="toast" class="fixed bottom-5 right-5 bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+  <div id="toast" class="fixed bottom-5 right-5 bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs px-4 py-3 rounded-card shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
     <i data-lucide="info" id="toastIcon" class="w-4 h-4 text-blue-500"></i>
     <span id="toastMsg">Action completed successfully</span>
   </div>
 
   <script>
-    // INDEXED DB PERISTENT VIDEO FILE STORAGE
-    const DB_NAME = "MovieHubVideoDB";
+    // INDEXED DB PERSISTENT VIDEO FILE STORAGE
+    const DB_NAME = "MovieHubVideoDB_v2";
     const DB_VERSION = 1;
     const STORE_NAME = "video_blobs";
 
@@ -769,7 +881,6 @@
         store.put(fileBlob, movieId);
         return new Promise((resolve) => tx.oncomplete = () => resolve(true));
       } catch (e) {
-        console.warn("Failed to store video blob in IndexedDB:", e);
         return false;
       }
     }
@@ -798,48 +909,99 @@
       } catch (e) {}
     }
 
-    // APP VERSION CONSTANTS
-    const CURRENT_CLIENT_VERSION = document.querySelector('meta[name="app-version"]')?.content || "1.4.0";
-
-    // EMAILJS KEYS
+    // APP CONSTANTS
+    const CURRENT_CLIENT_VERSION = document.querySelector('meta[name="app-version"]')?.content || "2.0.0";
     const EMAILJS_PUBLIC_KEY = "NJ0dfOYioKH3XMU_b";
     const EMAILJS_SERVICE_ID = "service_btdwqyn";
     const EMAILJS_TEMPLATE_ID = "template_hkd6pqw";
-
-    // OWNER CONFIG
     const OWNER_EMAIL = "steven.guo@makatihope.edu.ph";
 
     let moderatorsList = [OWNER_EMAIL];
-
-    let currentPendingAuth = {
-      email: "",
-      name: "",
-      generatedOtp: ""
-    };
-    
-    let currentUser = {
-      email: "",
-      name: "",
-      isSignedIn: false,
-      isGuest: false,
-      authMethod: ""
-    };
+    let currentPendingAuth = { email: "", name: "", generatedOtp: "" };
+    let currentUser = { email: "", name: "", isSignedIn: false, isGuest: false, authMethod: "" };
 
     let movies = [];
     let playlists = [];
+    let watchHistory = [];
 
     let currentWatchMovie = null;
     let pendingDeleteMovieId = null;
     let pendingEditMovieId = null;
     let pendingSaveMovieId = null;
-    let activePlaylistId = null;
-    let activeFilter = 'all';
 
     let activeNav = 'Home';
     let currentSourceType = 'file';
     let editSourceType = 'file';
+    let isEditingMovieMode = false;
 
-    // CLIENT - SERVER VERSION CONTROL
+    // DEFAULT RELEASE LOG
+    let releaseLogContent = `[MovieHub v2.0.0 Release Notes]
+- Cinema & Studio Upgrade
+- Added intro screen with letterbox FX and click-to-skip.
+- Added multi-step upload & editing.
+- Added custom video player controls with separate Quality & FPS menus.
+- Added Auto-Generated AI VTT Closed Captions.
+- Expanded Google Drive links parser to support all share/open links.
+- Dynamic hover expandable sidebar.
+- Integrated Account page featuring Watch History, Playlists & Settings.
+- Ambient Lighting & Realistic Edge Lighting toggle options.`;
+
+    // EXACT INTRO ANIMATION CONTROL (Black 0.5s -> Horizontal split -> Centered Logo with blurred bg)
+    let introSkipped = false;
+    function runIntroAnimation() {
+      const barTop = document.getElementById('introBarTop');
+      const barBottom = document.getElementById('introBarBottom');
+      const blurBackdrop = document.getElementById('introBlurBackdrop');
+      const logo = document.getElementById('introLogoContainer');
+      const overlay = document.getElementById('introOverlay');
+
+      // Phase 1: Keep black screen for 0.5s
+      setTimeout(() => {
+        if (introSkipped) return;
+
+        // Phase 2: Open black screen horizontally to letterbox height (12vh top, 12vh bottom)
+        barTop.style.height = '12vh';
+        barBottom.style.height = '12vh';
+
+        // Reveal blur backdrop over the site
+        blurBackdrop.classList.remove('opacity-0');
+        blurBackdrop.classList.add('opacity-100');
+
+        // Move logo to center and reveal
+        logo.classList.remove('opacity-0', 'scale-75');
+        logo.classList.add('opacity-100', 'scale-100');
+      }, 500);
+
+      // Phase 3: Hold for 1.8s then revert back to normal site
+      setTimeout(() => {
+        if (introSkipped) return;
+
+        barTop.style.height = '0vh';
+        barBottom.style.height = '0vh';
+        blurBackdrop.classList.remove('opacity-100');
+        blurBackdrop.classList.add('opacity-0');
+        logo.classList.remove('opacity-100');
+        logo.classList.add('opacity-0');
+      }, 2300);
+
+      // Phase 4: Clean up overlay entirely
+      setTimeout(() => {
+        if (introSkipped) return;
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => overlay.remove(), 400);
+      }, 2900);
+    }
+
+    function skipIntro() {
+      introSkipped = true;
+      const overlay = document.getElementById('introOverlay');
+      if (overlay) {
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => overlay.remove(), 300);
+      }
+    }
+
+    // VERSION CONTROL & AUTO-UPDATER
     function compareVersions(v1, v2) {
       const p1 = v1.split('.').map(Number);
       const p2 = v2.split('.').map(Number);
@@ -875,10 +1037,9 @@
         if (serverVersion && compareVersions(CURRENT_CLIENT_VERSION, serverVersion) < 0) {
           triggerAutoUpdate(serverVersion);
         } else if (manual) {
-          showToast(`Already on the latest version (v${CURRENT_CLIENT_VERSION})`);
+          showToast(`Already on latest engine (v${CURRENT_CLIENT_VERSION})`);
         }
       } catch (err) {
-        console.warn("Version check skipped:", err);
         if (manual) showToast("Could not verify server version");
       } finally {
         const checkBtn = document.getElementById('checkUpdateBtn');
@@ -897,10 +1058,7 @@
       if (banner) banner.classList.remove('hidden');
 
       showToast(`New Version v${newVersion} detected! Reloading...`);
-
-      setTimeout(() => {
-        window.location.reload(true);
-      }, 1500);
+      setTimeout(() => window.location.reload(true), 1500);
     }
 
     function initVersionMonitoring() {
@@ -913,16 +1071,7 @@
       if (settingsClient) settingsClient.textContent = `v${CURRENT_CLIENT_VERSION}`;
 
       checkForUpdates(false);
-
-      setInterval(() => {
-        checkForUpdates(false);
-      }, 30000);
-
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          checkForUpdates(false);
-        }
-      });
+      setInterval(() => checkForUpdates(false), 30000);
     }
 
     function setCookie(name, value, days = 7) {
@@ -942,13 +1091,12 @@
     }
 
     function loadSavedMovies() {
-      const stored = localStorage.getItem('moviehub_movies_data');
+      const stored = localStorage.getItem('moviehub_movies_data_v2');
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            movies = parsed.filter(m => !m.id.startsWith('m_sample_'));
-            saveMoviesToStorage();
+            movies = parsed;
             return;
           }
         } catch (e) {}
@@ -959,50 +1107,56 @@
 
     function saveMoviesToStorage() {
       try {
-        localStorage.setItem('moviehub_movies_data', JSON.stringify(movies));
-      } catch (e) {
-        console.warn("Storage quota limit reached");
-      }
+        localStorage.setItem('moviehub_movies_data_v2', JSON.stringify(movies));
+      } catch (e) {}
     }
 
     function loadSavedPlaylists() {
-      const stored = localStorage.getItem('moviehub_playlists_data');
+      const stored = localStorage.getItem('moviehub_playlists_data_v2');
       if (stored) {
         try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            playlists = parsed;
-            return;
-          }
+          playlists = JSON.parse(stored);
+          return;
         } catch (e) {}
       }
-      playlists = [
-        { id: "pl_favorites", name: "Favorites", description: "Your favorite saved movies", movieIds: [] }
-      ];
+      playlists = [{ id: "pl_favorites", name: "Favorites", description: "Saved favorites", movieIds: [] }];
       savePlaylistsToStorage();
     }
 
     function savePlaylistsToStorage() {
       try {
-        localStorage.setItem('moviehub_playlists_data', JSON.stringify(playlists));
+        localStorage.setItem('moviehub_playlists_data_v2', JSON.stringify(playlists));
       } catch (e) {}
+    }
+
+    function loadWatchHistory() {
+      const stored = localStorage.getItem('moviehub_watch_history');
+      if (stored) {
+        try { watchHistory = JSON.parse(stored); } catch (e) {}
+      }
+    }
+
+    function saveWatchHistory() {
+      try { localStorage.setItem('moviehub_watch_history', JSON.stringify(watchHistory)); } catch (e) {}
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
+      runIntroAnimation();
+      
       if (EMAILJS_PUBLIC_KEY && typeof emailjs !== 'undefined') {
-        try {
-          emailjs.init(EMAILJS_PUBLIC_KEY);
-        } catch (err) {
-          console.warn("EmailJS init warning:", err);
-        }
+        try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch (err) {}
       }
       loadModerators();
       loadSavedMovies();
       loadSavedPlaylists();
+      loadWatchHistory();
       checkSavedCookieSession();
       renderHomeView();
       initVersionMonitoring();
+
+      const editor = document.getElementById('updateLogEditor');
+      if (editor) editor.value = releaseLogContent;
     });
 
     function loadModerators() {
@@ -1010,14 +1164,10 @@
       if (savedMods) {
         try {
           const parsed = JSON.parse(savedMods);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            moderatorsList = parsed;
-          }
+          if (Array.isArray(parsed) && parsed.length > 0) moderatorsList = parsed;
         } catch (e) {}
       }
-      if (!moderatorsList.includes(OWNER_EMAIL)) {
-        moderatorsList.push(OWNER_EMAIL);
-      }
+      if (!moderatorsList.includes(OWNER_EMAIL)) moderatorsList.push(OWNER_EMAIL);
     }
 
     function saveModerators() {
@@ -1040,11 +1190,8 @@
             updateAuthUI();
             return;
           }
-        } catch (e) {
-          console.error("Invalid session cookie");
-        }
+        } catch (e) {}
       }
-      
       openLoginOverlay();
       updateAuthUI();
     }
@@ -1064,13 +1211,13 @@
       const formUP = document.getElementById('formAuthUserPass');
 
       if (type === 'google') {
-        tabG.className = "flex-1 py-2 rounded-lg bg-blue-600 text-white transition";
-        tabUP.className = "flex-1 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 transition";
+        tabG.className = "flex-1 py-2 rounded-button bg-blue-600 text-white transition";
+        tabUP.className = "flex-1 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition";
         formG.classList.remove('hidden');
         formUP.classList.add('hidden');
       } else {
-        tabUP.className = "flex-1 py-2 rounded-lg bg-blue-600 text-white transition";
-        tabG.className = "flex-1 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 transition";
+        tabUP.className = "flex-1 py-2 rounded-button bg-blue-600 text-white transition";
+        tabG.className = "flex-1 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition";
         formUP.classList.remove('hidden');
         formG.classList.add('hidden');
       }
@@ -1085,50 +1232,25 @@
       const sendBtn = document.getElementById('sendEmailBtn');
       const originalText = sendBtn.innerHTML;
       sendBtn.disabled = true;
-      sendBtn.innerHTML = `
-        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span>Sending Email...</span>
-      `;
+      sendBtn.innerHTML = `<span>Sending...</span>`;
 
       const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const currentTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      currentPendingAuth = {
-        email: email,
-        name: displayName,
-        generatedOtp: randomCode
-      };
+      currentPendingAuth = { email: email, name: displayName, generatedOtp: randomCode };
 
       try {
         if (EMAILJS_PUBLIC_KEY && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && typeof emailjs !== 'undefined') {
           await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-            to_email: email,
-            email: email,
-            user_email: email,
-            to_name: displayName,
-            otp_code: randomCode,
-            passcode: randomCode,
-            code: randomCode,
-            time: currentTimeStr
+            to_email: email, email: email, user_email: email, to_name: displayName,
+            otp_code: randomCode, passcode: randomCode, code: randomCode
           });
-          showToast(`Verification code sent to ${email}`);
-        } else {
-          showToast(`Code dispatched via EmailJS`);
         }
+        showToast(`Verification code sent to ${email}`);
       } catch (err) {
-        console.warn("EmailJS delivery notification:", err);
-        showToast(`Verification email dispatched`);
+        showToast(`Verification code generated`);
       } finally {
         sendBtn.disabled = false;
         sendBtn.innerHTML = originalText;
-
-        document.getElementById('authHeaderTitle').textContent = "Verify Your Email";
-        document.getElementById('authHeaderSubtitle').textContent = "Security code sent to your email inbox.";
         document.getElementById('sentEmailDisplay').textContent = email;
-
         document.getElementById('authStepMethods').classList.add('hidden');
         document.getElementById('authStepOtp').classList.remove('hidden');
       }
@@ -1139,7 +1261,7 @@
       const inputCode = document.getElementById('inputOtpCode').value.trim();
 
       if (inputCode !== currentPendingAuth.generatedOtp) {
-        alert("Invalid verification code. Please check your email inbox.");
+        alert("Invalid code.");
         return;
       }
 
@@ -1155,12 +1277,10 @@
       cancelOtpStep();
       updateAuthUI();
       closeLoginOverlay();
-      showToast(`Successfully verified & signed in!`);
+      showToast(`Authorized as ${currentUser.name}`);
     }
 
     function cancelOtpStep() {
-      document.getElementById('authHeaderTitle').textContent = "Welcome to MovieHub";
-      document.getElementById('authHeaderSubtitle').textContent = "Sign in with email verification or continue as guest.";
       document.getElementById('authStepOtp').classList.add('hidden');
       document.getElementById('authStepMethods').classList.remove('hidden');
       document.getElementById('inputOtpCode').value = '';
@@ -1204,7 +1324,7 @@
       eraseCookie('moviehub_user_session');
       updateAuthUI();
       openLoginOverlay();
-      showToast("Signed out successfully");
+      showToast("Signed out");
     }
 
     function renderModeratorsPanel() {
@@ -1222,7 +1342,7 @@
       moderatorsList.forEach(email => {
         const isOwner = email.toLowerCase() === OWNER_EMAIL.toLowerCase();
         const item = document.createElement('div');
-        item.className = "flex items-center justify-between p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs";
+        item.className = "flex items-center justify-between p-2.5 bg-zinc-950 border border-zinc-800 rounded-card text-xs";
         item.innerHTML = `
           <div class="flex items-center gap-2">
             <i data-lucide="user" class="w-4 h-4 text-zinc-400"></i>
@@ -1237,7 +1357,6 @@
         `;
         modList.appendChild(item);
       });
-
       lucide.createIcons();
     }
 
@@ -1245,7 +1364,6 @@
       e.preventDefault();
       const input = document.getElementById('newModEmail');
       const email = input.value.trim().toLowerCase();
-
       if (!email) return;
 
       if (moderatorsList.includes(email)) {
@@ -1262,18 +1380,17 @@
 
     function removeModerator(email) {
       if (email.toLowerCase() === OWNER_EMAIL.toLowerCase()) return;
-
       moderatorsList = moderatorsList.filter(m => m.toLowerCase() !== email.toLowerCase());
       saveModerators();
       renderModeratorsPanel();
       showToast(`Removed moderator ${email}`);
     }
 
-    // MULTI-PROVIDER MEDIA EMBED PARSER (Drive, YouTube, Direct URL)
+    // EXPANDED GOOGLE DRIVE & MULTI-PROVIDER MEDIA LINK PARSER
     function parseMediaUrl(url) {
       if (!url) return null;
 
-      // 1. YouTube Check
+      // 1. YouTube Link Check
       const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
       if (ytMatch && ytMatch[1]) {
         const ytId = ytMatch[1];
@@ -1285,8 +1402,11 @@
         };
       }
 
-      // 2. Google Drive Check
-      const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      // 2. Google Drive Links
+      const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || 
+                         url.match(/id=([a-zA-Z0-9_-]+)/) ||
+                         url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
       if (driveMatch && driveMatch[1]) {
         const fileId = driveMatch[1];
         return {
@@ -1297,13 +1417,7 @@
         };
       }
 
-      // 3. Direct Media Stream Link
-      return {
-        type: 'direct',
-        id: null,
-        embedUrl: '',
-        thumb: ''
-      };
+      return { type: 'direct', id: null, embedUrl: '', thumb: '' };
     }
 
     function createDynamicPosterThumbnail(titleText) {
@@ -1313,9 +1427,9 @@
       const ctx = c.getContext('2d');
 
       const grad = ctx.createLinearGradient(0, 0, 640, 360);
-      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(0, '#09090b');
       grad.addColorStop(0.5, '#1e1b4b');
-      grad.addColorStop(1, '#09090b');
+      grad.addColorStop(1, '#0f172a');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 640, 360);
 
@@ -1341,7 +1455,7 @@
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '14px system-ui, sans-serif';
-      ctx.fillText('MovieHub Cinema Stream', 320, 270);
+      ctx.fillText('MovieHub Cinema Stream v2.0', 320, 270);
 
       return c.toDataURL('image/jpeg', 0.85);
     }
@@ -1397,33 +1511,13 @@
       if (type === 'file') {
         fileContainer.classList.remove('hidden');
         driveContainer.classList.add('hidden');
-        tabFile.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
-        tabDrive.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
+        tabFile.className = "flex-1 py-2 px-3 rounded-button text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
+        tabDrive.className = "flex-1 py-2 px-3 rounded-button text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
       } else {
         fileContainer.classList.add('hidden');
         driveContainer.classList.remove('hidden');
-        tabDrive.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
-        tabFile.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
-      }
-    }
-
-    function setEditSourceTab(type) {
-      editSourceType = type;
-      const fileContainer = document.getElementById('editFileUploadContainer');
-      const driveContainer = document.getElementById('editDriveLinkContainer');
-      const tabFile = document.getElementById('editTabFile');
-      const tabDrive = document.getElementById('editTabDrive');
-
-      if (type === 'file') {
-        fileContainer.classList.remove('hidden');
-        driveContainer.classList.add('hidden');
-        tabFile.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
-        tabDrive.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
-      } else {
-        fileContainer.classList.add('hidden');
-        driveContainer.classList.remove('hidden');
-        tabDrive.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
-        tabFile.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
+        tabDrive.className = "flex-1 py-2 px-3 rounded-button text-xs font-medium border border-blue-600 bg-blue-600/10 text-blue-400 transition";
+        tabFile.className = "flex-1 py-2 px-3 rounded-button text-xs font-medium border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 transition";
       }
     }
 
@@ -1432,40 +1526,37 @@
 
       const navHome = document.getElementById('navHome');
       const navMovies = document.getElementById('navMovies');
-      const navPlaylists = document.getElementById('navPlaylists');
-      const navSettings = document.getElementById('navSettings');
+      const navAccount = document.getElementById('navAccount');
 
       const homeView = document.getElementById('homeView');
       const gridView = document.getElementById('videoGridView');
-      const playlistsView = document.getElementById('playlistsView');
-      const settingsView = document.getElementById('settingsView');
+      const accountView = document.getElementById('accountView');
       const watchView = document.getElementById('watchView');
 
-      [navHome, navMovies, navPlaylists, navSettings].forEach(el => {
-        if (el) el.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 font-medium text-xs cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition";
+      [navHome, navMovies, navAccount].forEach(el => {
+        if (el) el.className = "flex items-center gap-3 px-3 py-2.5 rounded-card text-zinc-400 font-semibold text-xs cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition";
       });
 
       const player = document.getElementById('mainPlayer');
       if (player) player.pause();
 
-      [homeView, gridView, playlistsView, settingsView, watchView].forEach(v => v.classList.add('hidden'));
+      [homeView, gridView, accountView, watchView].forEach(v => v.classList.add('hidden'));
 
       if (tab === 'Home') {
-        navHome.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-xs cursor-pointer transition";
+        navHome.className = "flex items-center gap-3 px-3 py-2.5 rounded-card bg-blue-600 text-white font-semibold text-xs cursor-pointer transition";
         homeView.classList.remove('hidden');
         renderHomeView();
       } else if (tab === 'Movies') {
-        navMovies.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-xs cursor-pointer transition";
+        navMovies.className = "flex items-center gap-3 px-3 py-2.5 rounded-card bg-blue-600 text-white font-semibold text-xs cursor-pointer transition";
         gridView.classList.remove('hidden');
         renderMoviesGrid();
-      } else if (tab === 'Playlists') {
-        navPlaylists.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-xs cursor-pointer transition";
-        playlistsView.classList.remove('hidden');
-        renderPlaylistsView();
-      } else if (tab === 'Settings') {
-        navSettings.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-xs cursor-pointer transition";
-        settingsView.classList.remove('hidden');
-        renderModeratorsPanel();
+      } else if (tab === 'Account' || tab === 'Settings') {
+        navAccount.className = "flex items-center gap-3 px-3 py-2.5 rounded-card bg-blue-600 text-white font-semibold text-xs cursor-pointer transition";
+        accountView.classList.remove('hidden');
+        renderAccountView();
+        if (tab === 'Settings') {
+          switchAccountTab('settings');
+        }
       }
     }
 
@@ -1482,8 +1573,8 @@
         userNameEl.textContent = currentUser.name;
         userAvatarEl.textContent = currentUser.name.charAt(0).toUpperCase();
         menuUserName.textContent = currentUser.name;
-        menuUserEmail.textContent = currentUser.isGuest ? 'Guest Access' : currentUser.email;
-        if (settingsEmail) settingsEmail.textContent = currentUser.isGuest ? 'Guest Mode' : currentUser.email;
+        menuUserEmail.textContent = currentUser.isGuest ? 'Guest Session' : currentUser.email;
+        if (settingsEmail) settingsEmail.textContent = currentUser.isGuest ? 'Guest Session' : currentUser.email;
         signOutBtn.classList.remove('hidden');
 
         const isMod = isUserModerator(currentUser.email);
@@ -1518,14 +1609,13 @@
       renderModeratorsPanel();
     }
 
-    // HOME VIEW RENDERER (Customized Dashboard)
+    // HOME DASHBOARD RENDERER
     function renderHomeView() {
       const heroBg = document.getElementById('homeHeroBg');
       const heroTitle = document.getElementById('heroTitle');
       const heroDesc = document.getElementById('heroDesc');
       const heroActions = document.getElementById('heroActions');
       const recentRow = document.getElementById('homeRecentRow');
-      const playlistsRow = document.getElementById('homePlaylistsRow');
 
       const canUpload = isUserModerator(currentUser.email);
 
@@ -1535,118 +1625,63 @@
         
         heroBg.style.backgroundImage = `url('${thumbSrc}')`;
         heroTitle.textContent = topMovie.title;
-        heroDesc.textContent = topMovie.description || "Stream this featured title on MovieHub in full HD quality.";
+        heroDesc.textContent = topMovie.description || "Stream this featured title on MovieHub.";
 
         heroActions.innerHTML = `
-          <button onclick="openWatchView('${topMovie.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center gap-2 transition">
+          <button onclick="openWatchView('${topMovie.id}')" class="edge-glow edge-glow-active bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-card font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center gap-2 transition">
             <i data-lucide="play" class="w-4 h-4 fill-white"></i> Watch Now
           </button>
-          <button onclick="openSaveToPlaylistModal('${topMovie.id}')" class="bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700 text-white px-4 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 transition backdrop-blur">
+          <button onclick="openSaveToPlaylistModal('${topMovie.id}')" class="bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 text-white px-4 py-2.5 rounded-card font-semibold text-xs flex items-center gap-2 transition backdrop-blur">
             <i data-lucide="plus" class="w-4 h-4 text-blue-400"></i> Add to Playlist
           </button>
         `;
       } else {
         heroBg.style.backgroundImage = `none`;
-        heroTitle.textContent = "Welcome to MovieHub";
-        heroDesc.textContent = "Your modern streaming portal. Upload movie files or Google Drive/YouTube video links to begin.";
+        heroTitle.textContent = "Welcome to MovieHub v2.0.0";
+        heroDesc.textContent = "Your modern cinema portal. Upload movie files or Google Drive/YouTube video links.";
         heroActions.innerHTML = canUpload ? `
-          <button onclick="openUploadModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center gap-2 transition">
-            <i data-lucide="upload" class="w-4 h-4"></i> Upload Movie Now
+          <button onclick="openUploadModal()" class="edge-glow edge-glow-active bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-card font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center gap-2 transition">
+            <i data-lucide="upload" class="w-4 h-4"></i> Upload Movie
           </button>
-        ` : `
-          <p class="text-xs text-zinc-400 italic">Sign in as a moderator to publish movies.</p>
-        `;
+        ` : `<p class="text-xs text-zinc-400 italic">Sign in as a moderator to publish movies.</p>`;
       }
 
-      // Render Recently Added Movies Row
       recentRow.innerHTML = '';
       if (movies.length === 0) {
         recentRow.innerHTML = `<p class="col-span-full text-xs text-zinc-500 py-4 italic">No movies uploaded yet.</p>`;
       } else {
-        movies.slice(0, 4).forEach(movie => {
-          recentRow.appendChild(createMovieCardElement(movie));
-        });
+        movies.slice(0, 4).forEach(movie => recentRow.appendChild(createMovieCardElement(movie)));
       }
-
-      // Render Home Playlists Row
-      playlistsRow.innerHTML = '';
-      if (playlists.length === 0) {
-        playlistsRow.innerHTML = `<p class="col-span-full text-xs text-zinc-500 py-4 italic">No playlists created yet.</p>`;
-      } else {
-        playlists.slice(0, 4).forEach(pl => {
-          playlistsRow.appendChild(createPlaylistCardElement(pl));
-        });
-      }
-
       lucide.createIcons();
     }
 
-    // MOVIES DIRECTORY RENDERER
     function setMovieFilter(filter) {
-      activeFilter = filter;
       const filterAll = document.getElementById('filterAll');
-      const filterDrive = document.getElementById('filterDrive');
       const filterPopular = document.getElementById('filterPopular');
 
-      [filterAll, filterDrive, filterPopular].forEach(b => {
-        if (b) b.className = "px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition";
-      });
-
-      if (filter === 'all' && filterAll) filterAll.className = "px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition";
-      if (filter === 'drive' && filterDrive) filterDrive.className = "px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition";
-      if (filter === 'popular' && filterPopular) filterPopular.className = "px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition";
-
-      renderMoviesGrid();
+      if (filter === 'popular') {
+        filterPopular.className = "px-3 py-1.5 rounded-card bg-blue-600 text-white font-semibold transition";
+        filterAll.className = "px-3 py-1.5 rounded-card bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition";
+      } else {
+        filterAll.className = "px-3 py-1.5 rounded-card bg-blue-600 text-white font-semibold transition";
+        filterPopular.className = "px-3 py-1.5 rounded-card bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition";
+      }
+      renderMoviesGrid(filter);
     }
 
-    function renderMoviesGrid(searchQuery = '') {
+    function renderMoviesGrid(filter = 'all') {
       const grid = document.getElementById('moviesContainerGrid');
       grid.innerHTML = '';
 
       let filtered = [...movies];
-
-      if (activeFilter === 'drive') {
-        filtered = filtered.filter(m => m.isEmbed);
-      } else if (activeFilter === 'popular') {
-        filtered.sort((a, b) => b.views - a.views);
-      }
-
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase();
-        filtered = filtered.filter(m => 
-          m.title.toLowerCase().includes(q) || 
-          m.uploader.toLowerCase().includes(q) ||
-          m.description.toLowerCase().includes(q)
-        );
-      }
-
-      const canUpload = isUserModerator(currentUser.email);
+      if (filter === 'popular') filtered.sort((a, b) => b.views - a.views);
 
       if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full text-center py-20 text-zinc-500 space-y-3">
-            <div class="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mx-auto border border-zinc-800">
-              <i data-lucide="film" class="w-8 h-8 text-zinc-600"></i>
-            </div>
-            <p class="text-sm font-semibold text-zinc-300">No movies available</p>
-            <p class="text-xs text-zinc-500 max-w-sm mx-auto">
-              ${canUpload ? 'Click "Upload Movie" to publish a new movie.' : 'Sign in as a moderator to publish movies.'}
-            </p>
-            ${canUpload ? `
-              <button onclick="openUploadModal()" class="mt-2 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 px-4 rounded-xl transition">
-                <i data-lucide="upload" class="w-4 h-4"></i> Upload Now
-              </button>
-            ` : ''}
-          </div>
-        `;
-        lucide.createIcons();
+        grid.innerHTML = `<p class="col-span-full text-center py-16 text-zinc-500 text-xs">No movies available.</p>`;
         return;
       }
 
-      filtered.forEach(movie => {
-        grid.appendChild(createMovieCardElement(movie));
-      });
-
+      filtered.forEach(movie => grid.appendChild(createMovieCardElement(movie)));
       lucide.createIcons();
     }
 
@@ -1658,20 +1693,20 @@
       const thumbSrc = movie.thumbnail || createDynamicPosterThumbnail(movie.title);
 
       card.innerHTML = `
-        <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800/80" onclick="openWatchView('${movie.id}')">
+        <div class="relative aspect-video rounded-card overflow-hidden bg-zinc-900 border border-zinc-800/80" onclick="openWatchView('${movie.id}')">
           <img src="${thumbSrc}" alt="${movie.title}" onerror="this.src='${createDynamicPosterThumbnail(movie.title)}'" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
           <div class="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-zinc-200 flex items-center gap-1">
             ${movie.isEmbed ? '<i data-lucide="play-circle" class="w-3 h-3 text-blue-400"></i> EMBED' : 'LOCAL'}
           </div>
           <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-            <button onclick="openSaveToPlaylistModal('${movie.id}', event)" class="bg-blue-600/80 hover:bg-blue-600 text-white p-1.5 rounded-lg shadow-lg" title="Add to Playlist">
+            <button onclick="openSaveToPlaylistModal('${movie.id}', event)" class="bg-blue-600/80 hover:bg-blue-600 text-white p-1.5 rounded-button shadow-lg" title="Add to Playlist">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             </button>
             ${canUpload ? `
-              <button onclick="promptEditMovie('${movie.id}', event)" class="bg-zinc-800/90 hover:bg-zinc-700 text-white p-1.5 rounded-lg shadow-lg" title="Edit Movie">
+              <button onclick="promptEditMovie('${movie.id}', event)" class="bg-zinc-800/90 hover:bg-zinc-700 text-white p-1.5 rounded-button shadow-lg" title="Edit Movie">
                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
               </button>
-              <button onclick="promptDeleteMovie('${movie.id}', event)" class="bg-rose-600/80 hover:bg-rose-600 text-white p-1.5 rounded-lg shadow-lg" title="Delete Movie">
+              <button onclick="promptDeleteMovie('${movie.id}', event)" class="bg-rose-600/80 hover:bg-rose-600 text-white p-1.5 rounded-button shadow-lg" title="Delete">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             ` : ''}
@@ -1695,173 +1730,575 @@
       return card;
     }
 
-    // PLAYLIST VIEW RENDERER
-    function renderPlaylistsView() {
-      const grid = document.getElementById('playlistsGrid');
-      const detailContainer = document.getElementById('playlistDetailContainer');
+    // ACCOUNT PAGE & INTEGRATED SETTINGS RENDERER
+    function renderAccountView() {
+      const avatarLg = document.getElementById('channelAvatarLg');
+      const nameHeader = document.getElementById('channelNameHeader');
+      const emailHeader = document.getElementById('channelEmailHeader');
+      const roleBadge = document.getElementById('channelRoleBadge');
+      const watchCount = document.getElementById('channelWatchCount');
 
+      const userName = currentUser.isSignedIn ? currentUser.name : "Guest Visitor";
+      const userEmail = currentUser.isGuest ? "Guest Access Mode" : (currentUser.email || "Not signed in");
+
+      avatarLg.textContent = userName.charAt(0).toUpperCase();
+      nameHeader.textContent = userName;
+      emailHeader.textContent = userEmail;
+      watchCount.textContent = `${watchHistory.length} videos in history`;
+
+      if (isUserModerator(currentUser.email)) {
+        roleBadge.textContent = "Moderator";
+      } else {
+        roleBadge.textContent = "Member";
+      }
+
+      switchAccountTab('history');
+    }
+
+    function switchAccountTab(tab) {
+      const tabH = document.getElementById('accountTabHistory');
+      const tabP = document.getElementById('accountTabPlaylists');
+      const tabU = document.getElementById('accountTabMyUploads');
+      const tabS = document.getElementById('accountTabSettings');
+
+      const subH = document.getElementById('accountSubHistory');
+      const subP = document.getElementById('accountSubPlaylists');
+      const subU = document.getElementById('accountSubMyUploads');
+      const subS = document.getElementById('accountSubSettings');
+
+      [tabH, tabP, tabU, tabS].forEach(t => {
+        if (t) t.className = "px-4 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition shrink-0 flex items-center gap-1.5";
+      });
+      [subH, subP, subU, subS].forEach(s => s.classList.add('hidden'));
+
+      if (tab === 'history') {
+        tabH.className = "px-4 py-2 rounded-button bg-blue-600 text-white transition shrink-0 flex items-center gap-1.5";
+        subH.classList.remove('hidden');
+        renderHistoryGrid();
+      } else if (tab === 'playlists') {
+        tabP.className = "px-4 py-2 rounded-button bg-blue-600 text-white transition shrink-0 flex items-center gap-1.5";
+        subP.classList.remove('hidden');
+        renderAccountPlaylists();
+      } else if (tab === 'myuploads') {
+        tabU.className = "px-4 py-2 rounded-button bg-blue-600 text-white transition shrink-0 flex items-center gap-1.5";
+        subU.classList.remove('hidden');
+        renderAccountMyUploads();
+      } else if (tab === 'settings') {
+        tabS.className = "px-4 py-2 rounded-button bg-blue-600 text-white transition shrink-0 flex items-center gap-1.5";
+        subS.classList.remove('hidden');
+        renderModeratorsPanel();
+      }
+    }
+
+    function renderHistoryGrid() {
+      const grid = document.getElementById('historyGrid');
       grid.innerHTML = '';
-      detailContainer.classList.add('hidden');
+
+      if (watchHistory.length === 0) {
+        grid.innerHTML = `<p class="col-span-full text-xs text-zinc-500 py-6 italic">No watch history recorded yet.</p>`;
+        return;
+      }
+
+      watchHistory.forEach(hId => {
+        const movie = movies.find(m => m.id === hId);
+        if (movie) grid.appendChild(createMovieCardElement(movie));
+      });
+      lucide.createIcons();
+    }
+
+    function clearWatchHistory() {
+      watchHistory = [];
+      saveWatchHistory();
+      renderHistoryGrid();
+      showToast("Watch history cleared");
+    }
+
+    function renderAccountPlaylists() {
+      const grid = document.getElementById('accountPlaylistsGrid');
+      grid.innerHTML = '';
 
       if (playlists.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full text-center py-16 text-zinc-500 space-y-2">
-            <p class="text-xs font-semibold">No playlists created yet.</p>
-            <button onclick="openCreatePlaylistModal()" class="text-xs text-blue-400 hover:underline">Create your first playlist</button>
-          </div>
-        `;
+        grid.innerHTML = `<p class="col-span-full text-xs text-zinc-500 py-6 italic">No saved playlists.</p>`;
         return;
       }
 
       playlists.forEach(pl => {
-        grid.appendChild(createPlaylistCardElement(pl));
-      });
-
-      if (activePlaylistId) {
-        renderPlaylistDetailView(activePlaylistId);
-      }
-
-      lucide.createIcons();
-    }
-
-    function createPlaylistCardElement(pl) {
-      const card = document.createElement('div');
-      card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-blue-500/50 transition group space-y-3";
-      card.onclick = () => showPlaylistDetail(pl.id);
-
-      const firstMovie = movies.find(m => pl.movieIds.includes(m.id));
-      const coverThumb = firstMovie ? (firstMovie.thumbnail || createDynamicPosterThumbnail(firstMovie.title)) : createDynamicPosterThumbnail(pl.name);
-
-      card.innerHTML = `
-        <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-950 border border-zinc-800">
-          <img src="${coverThumb}" alt="${pl.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-          <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-            <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg">
-              <i data-lucide="play" class="w-5 h-5 fill-white ml-0.5"></i>
-            </div>
+        const card = document.createElement('div');
+        card.className = "bg-zinc-900 border border-zinc-800 rounded-card p-3 space-y-2 cursor-pointer hover:border-blue-500 transition";
+        card.onclick = () => openWatchView(pl.movieIds[0]);
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white truncate">${pl.name}</h4>
+            <span class="text-[10px] text-zinc-500 font-mono">${pl.movieIds.length} items</span>
           </div>
-          <div class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-mono px-2 py-0.5 rounded-md font-bold">
-            ${pl.movieIds.length} videos
-          </div>
-        </div>
-        <div>
-          <h3 class="text-xs font-bold text-white group-hover:text-blue-400 transition truncate">${pl.name}</h3>
-          <p class="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">${pl.description || 'Custom Playlist'}</p>
-        </div>
-      `;
-      return card;
-    }
-
-    function showPlaylistDetail(plId) {
-      activePlaylistId = plId;
-      if (activeNav !== 'Playlists') {
-        switchNav('Playlists');
-      } else {
-        renderPlaylistDetailView(plId);
-      }
-    }
-
-    function renderPlaylistDetailView(plId) {
-      const pl = playlists.find(p => p.id === plId);
-      const detailContainer = document.getElementById('playlistDetailContainer');
-      const titleEl = document.getElementById('playlistDetailTitle');
-      const descEl = document.getElementById('playlistDetailDesc');
-      const metaEl = document.getElementById('playlistDetailMeta');
-      const listEl = document.getElementById('playlistMoviesList');
-
-      if (!pl) {
-        detailContainer.classList.add('hidden');
-        return;
-      }
-
-      detailContainer.classList.remove('hidden');
-      titleEl.textContent = pl.name;
-      descEl.textContent = pl.description || "Collection playlist";
-      metaEl.textContent = `${pl.movieIds.length} movies in playlist`;
-
-      listEl.innerHTML = '';
-      const playlistMovies = movies.filter(m => pl.movieIds.includes(m.id));
-
-      if (playlistMovies.length === 0) {
-        listEl.innerHTML = `<p class="text-xs text-zinc-500 py-4 italic">No movies added to this playlist yet.</p>`;
-        return;
-      }
-
-      playlistMovies.forEach((m, idx) => {
-        const row = document.createElement('div');
-        row.className = "flex items-center justify-between bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/60 p-2.5 rounded-xl text-xs transition";
-        row.innerHTML = `
-          <div class="flex items-center gap-3 cursor-pointer overflow-hidden flex-1" onclick="openWatchView('${m.id}')">
-            <span class="font-mono text-zinc-500 font-bold w-4 text-center text-[11px]">${idx + 1}</span>
-            <div class="w-16 aspect-video bg-zinc-950 rounded-lg overflow-hidden shrink-0 border border-zinc-800">
-              <img src="${m.thumbnail || createDynamicPosterThumbnail(m.title)}" class="w-full h-full object-cover" />
-            </div>
-            <div class="overflow-hidden">
-              <h4 class="font-bold text-zinc-200 truncate">${m.title}</h4>
-              <p class="text-[10px] text-zinc-500">${m.uploader} • ${formatViews(m.views)} views</p>
-            </div>
-          </div>
-          <button onclick="removeMovieFromPlaylist('${pl.id}', '${m.id}')" class="text-zinc-500 hover:text-rose-400 p-2 rounded-lg transition" title="Remove from playlist">
-            <i data-lucide="minus-circle" class="w-4 h-4"></i>
-          </button>
         `;
-        listEl.appendChild(row);
+        grid.appendChild(card);
       });
+    }
 
+    function renderAccountMyUploads() {
+      const grid = document.getElementById('accountMyUploadsGrid');
+      grid.innerHTML = '';
+
+      const myUploads = movies.filter(m => m.uploaderEmail === currentUser.email);
+      if (myUploads.length === 0) {
+        grid.innerHTML = `<p class="col-span-full text-xs text-zinc-500 py-6 italic">You have not published any movies yet.</p>`;
+        return;
+      }
+
+      myUploads.forEach(movie => grid.appendChild(createMovieCardElement(movie)));
       lucide.createIcons();
     }
 
-    function playCurrentPlaylist() {
-      if (!activePlaylistId) return;
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      if (pl && pl.movieIds.length > 0) {
-        openWatchView(pl.movieIds[0]);
-      } else {
-        showToast("Playlist is empty");
+    // SETTINGS TAB CONTROLLER WITHIN ACCOUNT
+    function switchSettingsTab(tab) {
+      const tG = document.getElementById('setTabGeneral');
+      const tA = document.getElementById('setTabAdvanced');
+      const tE = document.getElementById('setTabExtras');
+
+      const sG = document.getElementById('setSubGeneral');
+      const sA = document.getElementById('setSubAdvanced');
+      const sE = document.getElementById('setSubExtras');
+
+      [tG, tA, tE].forEach(t => t.className = "flex-1 py-2 rounded-button text-zinc-400 hover:text-zinc-200 transition");
+      [sG, sA, sE].forEach(s => s.classList.add('hidden'));
+
+      if (tab === 'general') {
+        tG.className = "flex-1 py-2 rounded-button bg-blue-600 text-white transition";
+        sG.classList.remove('hidden');
+      } else if (tab === 'advanced') {
+        tA.className = "flex-1 py-2 rounded-button bg-blue-600 text-white transition";
+        sA.classList.remove('hidden');
+      } else if (tab === 'extras') {
+        tE.className = "flex-1 py-2 rounded-button bg-blue-600 text-white transition";
+        sE.classList.remove('hidden');
       }
     }
 
-    function deleteCurrentPlaylist() {
-      if (!activePlaylistId) return;
-      playlists = playlists.filter(p => p.id !== activePlaylistId);
-      activePlaylistId = null;
-      savePlaylistsToStorage();
-      renderPlaylistsView();
-      showToast("Playlist deleted");
+    function saveUpdateLogs() {
+      const text = document.getElementById('updateLogEditor').value;
+      releaseLogContent = text;
+      showToast("Update log saved successfully");
     }
 
-    // CREATE & SAVE TO PLAYLIST MODAL LOGIC
-    function openCreatePlaylistModal() {
-      document.getElementById('createPlaylistModal').classList.remove('hidden');
+    function toggleAmbientLighting(enabled) {
+      const canvas = document.getElementById('ambientLightingCanvas');
+      if (enabled) {
+        canvas.classList.remove('opacity-0');
+        canvas.classList.add('opacity-100');
+      } else {
+        canvas.classList.remove('opacity-100');
+        canvas.classList.add('opacity-0');
+      }
     }
 
-    function closeCreatePlaylistModal() {
-      document.getElementById('createPlaylistModal').classList.add('hidden');
+    function toggleEdgeGlowFX(enabled) {
+      const buttons = document.querySelectorAll('.edge-glow');
+      buttons.forEach(b => {
+        if (enabled) b.classList.add('edge-glow-active');
+        else b.classList.remove('edge-glow-active');
+      });
     }
+
+    // MULTI-STEP UPLOAD CONTROLLER
+    function switchStudioStep(step) {
+      const s1Btn = document.getElementById('studioStep1');
+      const s2Btn = document.getElementById('studioStep2');
+      const s1Content = document.getElementById('studioStep1Content');
+      const s2Content = document.getElementById('studioStep2Content');
+
+      const backBtn = document.getElementById('studioBackBtn');
+      const nextBtn = document.getElementById('studioNextBtn');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (step === 1) {
+        s1Btn.className = "flex-1 py-2.5 text-center border-b-2 border-blue-600 text-blue-400";
+        s2Btn.className = "flex-1 py-2.5 text-center border-b-2 border-transparent text-zinc-500";
+        s1Content.classList.remove('hidden');
+        s2Content.classList.add('hidden');
+
+        backBtn.classList.add('hidden');
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      } else {
+        s2Btn.className = "flex-1 py-2.5 text-center border-b-2 border-blue-600 text-blue-400";
+        s1Btn.className = "flex-1 py-2.5 text-center border-b-2 border-transparent text-zinc-500";
+        s2Content.classList.remove('hidden');
+        s1Content.classList.add('hidden');
+
+        backBtn.classList.remove('hidden');
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      }
+    }
+
+    function openUploadModal() {
+      if (!currentUser.isSignedIn || currentUser.isGuest || !isUserModerator(currentUser.email)) {
+        alert("Only authorized moderators can publish movies.");
+        return;
+      }
+      isEditingMovieMode = false;
+      document.getElementById('studioModalTitle').textContent = "Upload New Movie";
+      document.getElementById('uploadForm').reset();
+      switchStudioStep(1);
+      document.getElementById('uploadModal').classList.remove('hidden');
+    }
+
+    function promptEditMovie(movieId, event) {
+      if (event) event.stopPropagation();
+      if (!isUserModerator(currentUser.email)) return;
+
+      const movie = movies.find(m => m.id === movieId);
+      if (!movie) return;
+
+      isEditingMovieMode = true;
+      pendingEditMovieId = movieId;
+
+      document.getElementById('studioModalTitle').textContent = "Edit Movie Details";
+      document.getElementById('uploadTitle').value = movie.title;
+      document.getElementById('uploadDescription').value = movie.description || '';
+      document.getElementById('uploadThumbnail').value = movie.thumbnail || '';
+
+      if (movie.isEmbed) {
+        setSourceTab('drive');
+        document.getElementById('uploadDriveUrl').value = movie.embedUrl || movie.videoUrl || '';
+      } else {
+        setSourceTab('file');
+      }
+
+      switchStudioStep(1);
+      document.getElementById('uploadModal').classList.remove('hidden');
+    }
+
+    function openEditWatchMovie() {
+      if (currentWatchMovie) promptEditMovie(currentWatchMovie.id);
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.add('hidden');
+    }
+
+    async function handleStudioSubmit(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Processing Movie...</span>`;
+
+      try {
+        const title = document.getElementById('uploadTitle').value.trim();
+        const description = document.getElementById('uploadDescription').value.trim();
+        let thumbnail = document.getElementById('uploadThumbnail').value.trim();
+
+        if (isEditingMovieMode && pendingEditMovieId) {
+          const movie = movies.find(m => m.id === pendingEditMovieId);
+          if (movie) {
+            movie.title = title;
+            movie.description = description;
+
+            if (currentSourceType === 'file') {
+              const fileInput = document.getElementById('uploadFile');
+              if (fileInput.files && fileInput.files.length > 0) {
+                const videoFile = fileInput.files[0];
+                await saveVideoBlobToDB(movie.id, videoFile);
+                movie.videoUrl = URL.createObjectURL(videoFile);
+                movie.isEmbed = false;
+                movie.hasIndexedDB = true;
+                if (!thumbnail) thumbnail = await generateVideoFrameThumbnail(movie.videoUrl, title);
+              }
+            } else {
+              const driveUrl = document.getElementById('uploadDriveUrl').value.trim();
+              const parsedMedia = parseMediaUrl(driveUrl);
+              if (parsedMedia && parsedMedia.type === 'iframe') {
+                movie.isEmbed = true;
+                movie.embedUrl = parsedMedia.embedUrl;
+                movie.videoUrl = driveUrl;
+                if (!thumbnail && parsedMedia.thumb) thumbnail = parsedMedia.thumb;
+              }
+            }
+
+            if (thumbnail) movie.thumbnail = thumbnail;
+            saveMoviesToStorage();
+            showToast("Movie details updated!");
+          }
+        } else {
+          // NEW MOVIE UPLOAD MODE
+          const movieId = "m_" + Date.now();
+          let videoUrl = '';
+          let embedUrl = '';
+          let isEmbed = false;
+          let hasIndexedDB = false;
+
+          if (currentSourceType === 'file') {
+            const fileInput = document.getElementById('uploadFile');
+            if (!fileInput.files || fileInput.files.length === 0) {
+              alert("Please choose a video file.");
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalBtnText;
+              return;
+            }
+            const videoFile = fileInput.files[0];
+            await saveVideoBlobToDB(movieId, videoFile);
+
+            videoUrl = URL.createObjectURL(videoFile);
+            hasIndexedDB = true;
+            if (!thumbnail) thumbnail = await generateVideoFrameThumbnail(videoUrl, title);
+          } else {
+            const driveUrl = document.getElementById('uploadDriveUrl').value.trim();
+            const parsedMedia = parseMediaUrl(driveUrl);
+
+            if (!parsedMedia) {
+              alert("Enter a valid Google Drive or YouTube link.");
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalBtnText;
+              return;
+            }
+
+            if (parsedMedia.type === 'iframe') {
+              isEmbed = true;
+              embedUrl = parsedMedia.embedUrl;
+              videoUrl = driveUrl;
+              if (!thumbnail && parsedMedia.thumb) thumbnail = parsedMedia.thumb;
+            } else {
+              videoUrl = driveUrl;
+            }
+          }
+
+          const newMovie = {
+            id: movieId,
+            title: title,
+            uploader: currentUser.name,
+            uploaderEmail: currentUser.email,
+            videoUrl: videoUrl,
+            embedUrl: embedUrl,
+            isEmbed: isEmbed,
+            hasIndexedDB: hasIndexedDB,
+            thumbnail: thumbnail || createDynamicPosterThumbnail(title),
+            views: 1,
+            likes: 0,
+            date: "Just now",
+            description: description || "",
+            comments: []
+          };
+
+          movies.unshift(newMovie);
+          saveMoviesToStorage();
+          showToast("Movie published successfully!");
+        }
+
+        closeUploadModal();
+        switchNav('Home');
+      } catch (err) {
+        showToast("Error submitting movie");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    }
+
+    // CUSTOM VIDEO PLAYER CONTROLS
+    function toggleCustomPlay() {
+      const player = document.getElementById('mainPlayer');
+      const playBtn = document.getElementById('playPauseBtn');
+      if (player.paused) {
+        player.play();
+        playBtn.innerHTML = `<i data-lucide="pause" class="w-5 h-5 fill-white"></i>`;
+      } else {
+        player.pause();
+        playBtn.innerHTML = `<i data-lucide="play" class="w-5 h-5 fill-white"></i>`;
+      }
+      lucide.createIcons();
+    }
+
+    function toggleDropdown(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('hidden');
+    }
+
+    function setQuality(val) {
+      document.getElementById('currentQualityLabel').textContent = val;
+      toggleDropdown('qualityDropdown');
+      showToast(`Playback quality set to ${val}`);
+    }
+
+    function setFPS(val) {
+      document.getElementById('currentFpsLabel').textContent = val;
+      toggleDropdown('fpsDropdown');
+      showToast(`Frame rate target set to ${val}`);
+    }
+
+    function toggleCaptions() {
+      const track = document.getElementById('mainPlayerSubtitles');
+      const btn = document.getElementById('ccToggleBtn');
+      if (track) {
+        if (track.track.mode === 'showing') {
+          track.track.mode = 'hidden';
+          btn.classList.remove('border-blue-500', 'text-blue-400');
+          showToast("Captions turned off");
+        } else {
+          track.track.mode = 'showing';
+          btn.classList.add('border-blue-500', 'text-blue-400');
+          showToast("Auto-generated captions enabled");
+        }
+      }
+    }
+
+    function toggleFullScreen() {
+      const wrapper = document.getElementById('customPlayerWrapper');
+      if (!document.fullscreenElement) {
+        wrapper.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    function seekVideo(val) {
+      const player = document.getElementById('mainPlayer');
+      if (player.duration) {
+        player.currentTime = (val / 100) * player.duration;
+      }
+    }
+
+    // WATCH VIEW CONTROLLER
+    async function openWatchView(movieId) {
+      if (!currentUser.isSignedIn) {
+        openLoginOverlay();
+        return;
+      }
+
+      const movie = movies.find(m => m.id === movieId);
+      if (!movie) return;
+
+      currentWatchMovie = movie;
+      movie.views += 1;
+      saveMoviesToStorage();
+
+      if (!watchHistory.includes(movieId)) {
+        watchHistory.unshift(movieId);
+        saveWatchHistory();
+      }
+
+      document.getElementById('homeView').classList.add('hidden');
+      document.getElementById('videoGridView').classList.add('hidden');
+      document.getElementById('accountView').classList.add('hidden');
+      document.getElementById('watchView').classList.remove('hidden');
+
+      const player = document.getElementById('mainPlayer');
+      const driveIframe = document.getElementById('googleDriveIframe');
+      const track = document.getElementById('mainPlayerSubtitles');
+
+      if (movie.isEmbed && movie.embedUrl) {
+        player.pause();
+        player.classList.add('hidden');
+        driveIframe.classList.remove('hidden');
+        driveIframe.src = movie.embedUrl;
+      } else {
+        driveIframe.classList.add('hidden');
+        driveIframe.src = '';
+        player.classList.remove('hidden');
+
+        if (movie.hasIndexedDB) {
+          const storedBlob = await getVideoBlobFromDB(movie.id);
+          if (storedBlob) player.src = URL.createObjectURL(storedBlob);
+          else if (movie.videoUrl) player.src = movie.videoUrl;
+        } else {
+          player.src = movie.videoUrl;
+        }
+
+        const vttContent = `WEBVTT\n\n00:00.000 --> 00:10.000\n[Auto-Caption] ${movie.title}\n\n00:10.000 --> 00:30.000\n${movie.description || 'Cinema Streaming on MovieHub v2.0'}`;
+        const blob = new Blob([vttContent], { type: 'text/vtt' });
+        track.src = URL.createObjectURL(blob);
+      }
+
+      document.getElementById('watchTitle').textContent = movie.title;
+      document.getElementById('watchChannelName').textContent = movie.uploader;
+      document.getElementById('watchChannelAvatar').textContent = movie.uploader.charAt(0);
+      document.getElementById('watchLikes').textContent = movie.likes;
+      document.getElementById('watchViews').textContent = `${formatViews(movie.views)} views`;
+      document.getElementById('watchDate').textContent = movie.date;
+      document.getElementById('watchDescription').textContent = movie.description;
+
+      const deleteWatchBtn = document.getElementById('deleteWatchMovieBtn');
+      const editWatchBtn = document.getElementById('editWatchMovieBtn');
+      if (isUserModerator(currentUser.email)) {
+        deleteWatchBtn.classList.remove('hidden');
+        editWatchBtn.classList.remove('hidden');
+      } else {
+        deleteWatchBtn.classList.add('hidden');
+        editWatchBtn.classList.add('hidden');
+      }
+
+      renderUpNext(movie.id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showHome() { switchNav('Home'); }
+
+    function handleSearch(val) {
+      if (document.getElementById('videoGridView').classList.contains('hidden')) switchNav('Movies');
+      renderMoviesGrid();
+    }
+
+    function renderUpNext(currentId) {
+      const list = document.getElementById('upNextList');
+      list.innerHTML = '';
+
+      const nextMovies = movies.filter(m => m.id !== currentId);
+      if (nextMovies.length === 0) {
+        list.innerHTML = `<p class="text-xs text-zinc-500 italic">No other movies uploaded yet.</p>`;
+        return;
+      }
+
+      nextMovies.forEach(m => {
+        const item = document.createElement('div');
+        item.className = "flex gap-2.5 cursor-pointer group hover:bg-zinc-900/80 p-1.5 rounded-card transition";
+        item.onclick = () => openWatchView(m.id);
+        const thumbSrc = m.thumbnail || createDynamicPosterThumbnail(m.title);
+
+        item.innerHTML = `
+          <div class="w-32 aspect-video bg-zinc-900 rounded-card overflow-hidden shrink-0 relative border border-zinc-800">
+            <img src="${thumbSrc}" onerror="this.src='${createDynamicPosterThumbnail(m.title)}'" class="w-full h-full object-cover group-hover:scale-105 transition" />
+          </div>
+          <div class="overflow-hidden py-0.5">
+            <h4 class="text-xs font-semibold text-zinc-200 line-clamp-2 leading-snug group-hover:text-blue-400 transition">${m.title}</h4>
+            <p class="text-[10px] text-zinc-400 mt-1">${m.uploader}</p>
+            <p class="text-[10px] text-zinc-500">${formatViews(m.views)} views</p>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    function toggleLike() {
+      if (!currentWatchMovie) return;
+      currentWatchMovie.likes += 1;
+      saveMoviesToStorage();
+      document.getElementById('watchLikes').textContent = currentWatchMovie.likes;
+      showToast("Added to liked movies!");
+    }
+
+    function shareMovie() {
+      navigator.clipboard?.writeText(window.location.href);
+      showToast("Link copied to clipboard!");
+    }
+
+    // PLAYLIST MODAL HANDLERS
+    function openCreatePlaylistModal() { document.getElementById('createPlaylistModal').classList.remove('hidden'); }
+    function closeCreatePlaylistModal() { document.getElementById('createPlaylistModal').classList.add('hidden'); }
 
     function handleCreatePlaylist(e) {
       e.preventDefault();
       const title = document.getElementById('newPlaylistTitle').value.trim();
-      const desc = document.getElementById('newPlaylistDesc').value.trim();
-
       if (!title) return;
 
-      const newPl = {
-        id: "pl_" + Date.now(),
-        name: title,
-        description: desc,
-        movieIds: pendingSaveMovieId ? [pendingSaveMovieId] : []
-      };
-
+      const newPl = { id: "pl_" + Date.now(), name: title, description: "Playlist", movieIds: pendingSaveMovieId ? [pendingSaveMovieId] : [] };
       playlists.push(newPl);
       savePlaylistsToStorage();
       closeCreatePlaylistModal();
       closeSavePlaylistModal();
-
       showToast(`Created playlist "${title}"`);
-      if (activeNav === 'Playlists' || activeNav === 'Home') {
-        switchNav(activeNav);
-      }
     }
 
     function openSaveToPlaylistModal(movieId, event) {
@@ -1873,16 +2310,16 @@
       optionsDiv.innerHTML = '';
 
       if (playlists.length === 0) {
-        optionsDiv.innerHTML = `<p class="text-xs text-zinc-500 py-2">No playlists available. Create one below.</p>`;
+        optionsDiv.innerHTML = `<p class="text-xs text-zinc-500 py-2">No playlists available.</p>`;
       } else {
         playlists.forEach(pl => {
           const isAdded = pl.movieIds.includes(pendingSaveMovieId);
           const btn = document.createElement('div');
-          btn.className = "flex items-center justify-between p-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs cursor-pointer hover:border-blue-500 transition";
+          btn.className = "flex items-center justify-between p-2 rounded-card bg-zinc-950 border border-zinc-800 text-xs cursor-pointer hover:border-blue-500 transition";
           btn.onclick = () => toggleMovieInPlaylist(pl.id, pendingSaveMovieId);
           btn.innerHTML = `
-            <div class="flex items-center gap-2 overflow-hidden">
-              <i data-lucide="${isAdded ? 'check-square' : 'square'}" class="w-4 h-4 ${isAdded ? 'text-blue-500' : 'text-zinc-500'} shrink-0"></i>
+            <div class="flex items-center gap-2">
+              <i data-lucide="${isAdded ? 'check-square' : 'square'}" class="w-4 h-4 ${isAdded ? 'text-blue-500' : 'text-zinc-500'}"></i>
               <span class="text-zinc-200 font-semibold truncate">${pl.name}</span>
             </div>
             <span class="text-[10px] text-zinc-500 font-mono">${pl.movieIds.length} items</span>
@@ -1911,331 +2348,20 @@
         pl.movieIds.push(movieId);
         showToast(`Saved to ${pl.name}`);
       }
-
       savePlaylistsToStorage();
       openSaveToPlaylistModal(movieId);
     }
 
-    function removeMovieFromPlaylist(playlistId, movieId) {
-      const pl = playlists.find(p => p.id === playlistId);
-      if (!pl) return;
-
-      pl.movieIds = pl.movieIds.filter(id => id !== movieId);
-      savePlaylistsToStorage();
-      renderPlaylistDetailView(playlistId);
-      showToast(`Removed from playlist`);
-    }
-
-    // WATCH VIEW CONTROLLER (Handles Local File Re-hydration from IndexedDB)
-    async function openWatchView(movieId) {
-      if (!currentUser.isSignedIn) {
-        openLoginOverlay();
-        return;
-      }
-
-      const movie = movies.find(m => m.id === movieId);
-      if (!movie) return;
-
-      currentWatchMovie = movie;
-      movie.views += 1;
-      saveMoviesToStorage();
-
-      document.getElementById('homeView').classList.add('hidden');
-      document.getElementById('videoGridView').classList.add('hidden');
-      document.getElementById('playlistsView').classList.add('hidden');
-      document.getElementById('settingsView').classList.add('hidden');
-      document.getElementById('watchView').classList.remove('hidden');
-
-      const player = document.getElementById('mainPlayer');
-      const driveIframe = document.getElementById('googleDriveIframe');
-
-      if (movie.isEmbed && movie.embedUrl) {
-        player.pause();
-        player.classList.add('hidden');
-        driveIframe.classList.remove('hidden');
-        driveIframe.src = movie.embedUrl;
-      } else {
-        driveIframe.classList.add('hidden');
-        driveIframe.src = '';
-        player.classList.remove('hidden');
-
-        // RE-HYDRATE LOCAL VIDEO FROM INDEXED DB IF NEEDED
-        if (movie.hasIndexedDB) {
-          const storedBlob = await getVideoBlobFromDB(movie.id);
-          if (storedBlob) {
-            player.src = URL.createObjectURL(storedBlob);
-          } else if (movie.videoUrl) {
-            player.src = movie.videoUrl;
-          }
-        } else {
-          player.src = movie.videoUrl;
-        }
-      }
-
-      document.getElementById('watchTitle').textContent = movie.title;
-      document.getElementById('watchChannelName').textContent = movie.uploader;
-      document.getElementById('watchChannelAvatar').textContent = movie.uploader.charAt(0);
-      document.getElementById('watchLikes').textContent = movie.likes;
-      document.getElementById('watchViews').textContent = `${formatViews(movie.views)} views`;
-      document.getElementById('watchDate').textContent = movie.date;
-      document.getElementById('watchDescription').textContent = movie.description;
-
-      const deleteWatchBtn = document.getElementById('deleteWatchMovieBtn');
-      const editWatchBtn = document.getElementById('editWatchMovieBtn');
-      if (isUserModerator(currentUser.email)) {
-        deleteWatchBtn.classList.remove('hidden');
-        editWatchBtn.classList.remove('hidden');
-      } else {
-        deleteWatchBtn.classList.add('hidden');
-        editWatchBtn.classList.add('hidden');
-      }
-
-      renderComments();
-      renderUpNext(movie.id);
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function showHome() {
-      switchNav('Home');
-    }
-
-    function handleSearch(val) {
-      if (document.getElementById('videoGridView').classList.contains('hidden')) {
-        switchNav('Movies');
-      }
-      renderMoviesGrid(val);
-    }
-
-    function renderUpNext(currentId) {
-      const list = document.getElementById('upNextList');
-      list.innerHTML = '';
-
-      const nextMovies = movies.filter(m => m.id !== currentId);
-      if (nextMovies.length === 0) {
-        list.innerHTML = `<p class="text-xs text-zinc-500 italic">No other movies uploaded yet.</p>`;
-        return;
-      }
-
-      nextMovies.forEach(m => {
-        const item = document.createElement('div');
-        item.className = "flex gap-2.5 cursor-pointer group hover:bg-zinc-900/80 p-1.5 rounded-xl transition";
-        item.onclick = () => openWatchView(m.id);
-        const thumbSrc = m.thumbnail || createDynamicPosterThumbnail(m.title);
-
-        item.innerHTML = `
-          <div class="w-32 aspect-video bg-zinc-900 rounded-lg overflow-hidden shrink-0 relative border border-zinc-800">
-            <img src="${thumbSrc}" onerror="this.src='${createDynamicPosterThumbnail(m.title)}'" class="w-full h-full object-cover group-hover:scale-105 transition" />
-          </div>
-          <div class="overflow-hidden py-0.5">
-            <h4 class="text-xs font-semibold text-zinc-200 line-clamp-2 leading-snug group-hover:text-blue-400 transition">${m.title}</h4>
-            <p class="text-[10px] text-zinc-400 mt-1">${m.uploader}</p>
-            <p class="text-[10px] text-zinc-500">${formatViews(m.views)} views</p>
-          </div>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    function renderComments() {
-      if (!currentWatchMovie) return;
-      const list = document.getElementById('commentsList');
-      const count = document.getElementById('commentCount');
-      
-      count.textContent = currentWatchMovie.comments.length;
-      list.innerHTML = '';
-
-      if (currentWatchMovie.comments.length === 0) {
-        list.innerHTML = `<p class="text-xs text-zinc-500 py-2">No comments yet. Be the first to comment!</p>`;
-        return;
-      }
-
-      currentWatchMovie.comments.forEach(c => {
-        const div = document.createElement('div');
-        div.className = "flex gap-3 text-xs bg-zinc-900/40 p-2.5 rounded-xl border border-zinc-800/40";
-        div.innerHTML = `
-          <div class="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-zinc-300 text-[10px] shrink-0">
-            ${c.user.charAt(0)}
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-semibold text-zinc-300">${c.user}</span>
-              <span class="text-[10px] text-zinc-500">Just now</span>
-            </div>
-            <p class="text-zinc-400 mt-1">${c.text}</p>
-          </div>
-        `;
-        list.appendChild(div);
-      });
-    }
-
-    function postComment() {
-      const input = document.getElementById('commentInput');
-      if (!input.value.trim() || !currentWatchMovie) return;
-
-      currentWatchMovie.comments.unshift({
-        user: currentUser.isSignedIn ? currentUser.name : 'Anonymous Watcher',
-        text: input.value.trim()
-      });
-
-      saveMoviesToStorage();
-      input.value = '';
-      renderComments();
-      showToast("Comment added!");
-    }
-
-    function toggleLike() {
-      if (!currentWatchMovie) return;
-      currentWatchMovie.likes += 1;
-      saveMoviesToStorage();
-      document.getElementById('watchLikes').textContent = currentWatchMovie.likes;
-      showToast("Added to liked movies!");
-    }
-
-    function shareMovie() {
-      navigator.clipboard?.writeText(window.location.href);
-      showToast("Link copied to clipboard!");
-    }
-
-    // EDIT MOVIE FUNCTIONS
-    function promptEditMovie(movieId, event) {
-      if (event) event.stopPropagation();
-      if (!isUserModerator(currentUser.email)) {
-        alert("Only authorized moderators can edit movies.");
-        return;
-      }
-
-      const movie = movies.find(m => m.id === movieId);
-      if (!movie) return;
-
-      pendingEditMovieId = movieId;
-
-      document.getElementById('editTitle').value = movie.title;
-      document.getElementById('editDescription').value = movie.description || '';
-      document.getElementById('editThumbnail').value = movie.thumbnail || '';
-
-      if (movie.isEmbed) {
-        setEditSourceTab('drive');
-        document.getElementById('editDriveUrl').value = movie.embedUrl || movie.videoUrl || '';
-      } else {
-        setEditSourceTab('file');
-      }
-
-      document.getElementById('editModal').classList.remove('hidden');
-    }
-
-    function openEditWatchMovie() {
-      if (!currentWatchMovie) return;
-      promptEditMovie(currentWatchMovie.id);
-    }
-
-    function closeEditModal() {
-      pendingEditMovieId = null;
-      document.getElementById('editModal').classList.add('hidden');
-    }
-
-    async function handleMovieEdit(e) {
-      e.preventDefault();
-
-      if (!pendingEditMovieId || !isUserModerator(currentUser.email)) return;
-
-      const movie = movies.find(m => m.id === pendingEditMovieId);
-      if (!movie) return;
-
-      const submitBtn = document.getElementById('editSubmitBtn');
-      const originalBtnText = submitBtn.innerHTML;
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `
-        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span>Saving Changes...</span>
-      `;
-
-      try {
-        const newTitle = document.getElementById('editTitle').value.trim();
-        const newDescription = document.getElementById('editDescription').value.trim();
-        let newThumbnail = document.getElementById('editThumbnail').value.trim();
-
-        movie.title = newTitle;
-        movie.description = newDescription;
-
-        if (editSourceType === 'file') {
-          const fileInput = document.getElementById('editFile');
-          if (fileInput.files && fileInput.files.length > 0) {
-            const videoFile = fileInput.files[0];
-            await saveVideoBlobToDB(movie.id, videoFile);
-
-            movie.videoUrl = URL.createObjectURL(videoFile);
-            movie.embedUrl = '';
-            movie.isEmbed = false;
-            movie.hasIndexedDB = true;
-
-            if (!newThumbnail) {
-              newThumbnail = await generateVideoFrameThumbnail(movie.videoUrl, newTitle);
-            }
-          }
-        } else {
-          const driveUrlInput = document.getElementById('editDriveUrl').value.trim();
-          const parsedMedia = parseMediaUrl(driveUrlInput);
-
-          if (parsedMedia && parsedMedia.type === 'iframe') {
-            movie.isEmbed = true;
-            movie.embedUrl = parsedMedia.embedUrl;
-            movie.videoUrl = driveUrlInput;
-            movie.hasIndexedDB = false;
-
-            if (!newThumbnail && parsedMedia.thumb) {
-              newThumbnail = parsedMedia.thumb;
-            }
-          } else {
-            movie.isEmbed = false;
-            movie.embedUrl = '';
-            movie.videoUrl = driveUrlInput;
-            movie.hasIndexedDB = false;
-          }
-        }
-
-        if (newThumbnail) {
-          const parsedThumbDrive = parseMediaUrl(newThumbnail);
-          movie.thumbnail = (parsedThumbDrive && parsedThumbDrive.thumb) ? parsedThumbDrive.thumb : newThumbnail;
-        } else if (!movie.thumbnail) {
-          movie.thumbnail = createDynamicPosterThumbnail(newTitle);
-        }
-
-        saveMoviesToStorage();
-        closeEditModal();
-        showToast("Movie updated successfully!");
-
-        if (currentWatchMovie && currentWatchMovie.id === movie.id) {
-          openWatchView(movie.id);
-        } else {
-          switchNav(activeNav);
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("Error updating movie.");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-      }
-    }
-
-    // DELETE MOVIE FUNCTIONS
+    // DELETE MOVIE LOGIC
     function promptDeleteMovie(movieId, event) {
       if (event) event.stopPropagation();
-      if (!isUserModerator(currentUser.email)) {
-        alert("Only authorized moderators can delete movies.");
-        return;
-      }
+      if (!isUserModerator(currentUser.email)) return;
       pendingDeleteMovieId = movieId;
       document.getElementById('deleteModal').classList.remove('hidden');
     }
 
     function confirmDeleteCurrentMovie() {
-      if (!currentWatchMovie) return;
-      promptDeleteMovie(currentWatchMovie.id);
+      if (currentWatchMovie) promptDeleteMovie(currentWatchMovie.id);
     }
 
     function closeDeleteModal() {
@@ -2247,14 +2373,14 @@
       if (!pendingDeleteMovieId) return;
 
       movies = movies.filter(m => m.id !== pendingDeleteMovieId);
-      playlists.forEach(pl => {
-        pl.movieIds = pl.movieIds.filter(id => id !== pendingDeleteMovieId);
-      });
+      playlists.forEach(pl => pl.movieIds = pl.movieIds.filter(id => id !== pendingDeleteMovieId));
+      watchHistory = watchHistory.filter(id => id !== pendingDeleteMovieId);
 
       await deleteVideoBlobFromDB(pendingDeleteMovieId);
 
       saveMoviesToStorage();
       savePlaylistsToStorage();
+      saveWatchHistory();
 
       if (currentWatchMovie && currentWatchMovie.id === pendingDeleteMovieId) {
         currentWatchMovie = null;
@@ -2265,136 +2391,6 @@
 
       closeDeleteModal();
       showToast("Movie deleted successfully");
-    }
-
-    function openUploadModal() {
-      if (!currentUser.isSignedIn || currentUser.isGuest || !isUserModerator(currentUser.email)) {
-        alert("Only authorized moderators can publish movies.");
-        return;
-      }
-
-      document.getElementById('uploadModal').classList.remove('hidden');
-    }
-
-    function closeUploadModal() {
-      document.getElementById('uploadModal').classList.add('hidden');
-    }
-
-    async function handleMovieUpload(e) {
-      e.preventDefault();
-
-      if (!isUserModerator(currentUser.email)) {
-        alert("Unauthorized account.");
-        return;
-      }
-
-      const submitBtn = document.getElementById('submitBtn');
-      const originalBtnText = submitBtn.innerHTML;
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `
-        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span>Processing Video...</span>
-      `;
-
-      try {
-        const title = document.getElementById('uploadTitle').value.trim();
-        const thumbInput = document.getElementById('uploadThumbnail').value.trim();
-        const description = document.getElementById('uploadDescription').value.trim();
-
-        let videoUrl = '';
-        let embedUrl = '';
-        let isEmbed = false;
-        let hasIndexedDB = false;
-        let finalThumbnail = thumbInput;
-
-        const movieId = "m_" + Date.now();
-
-        if (finalThumbnail) {
-          const parsedThumb = parseMediaUrl(finalThumbnail);
-          if (parsedThumb && parsedThumb.thumb) {
-            finalThumbnail = parsedThumb.thumb;
-          }
-        }
-
-        if (currentSourceType === 'file') {
-          const fileInput = document.getElementById('uploadFile');
-          if (!fileInput.files || fileInput.files.length === 0) {
-            alert("Please select a video file.");
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-            return;
-          }
-          const videoFile = fileInput.files[0];
-          
-          // Save actual video blob into IndexedDB permanently
-          await saveVideoBlobToDB(movieId, videoFile);
-
-          videoUrl = URL.createObjectURL(videoFile);
-          hasIndexedDB = true;
-
-          if (!finalThumbnail) {
-            finalThumbnail = await generateVideoFrameThumbnail(videoUrl, title);
-          }
-        } else {
-          const driveUrlInput = document.getElementById('uploadDriveUrl').value.trim();
-          const parsedMedia = parseMediaUrl(driveUrlInput);
-
-          if (!parsedMedia) {
-            alert("Please enter a valid Google Drive, YouTube, or direct video link.");
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-            return;
-          }
-
-          if (parsedMedia.type === 'iframe') {
-            isEmbed = true;
-            embedUrl = parsedMedia.embedUrl;
-            videoUrl = driveUrlInput;
-
-            if (!finalThumbnail && parsedMedia.thumb) {
-              finalThumbnail = parsedMedia.thumb;
-            }
-          } else {
-            isEmbed = false;
-            videoUrl = driveUrlInput;
-          }
-        }
-
-        const newMovie = {
-          id: movieId,
-          title: title,
-          uploader: currentUser.name,
-          uploaderEmail: currentUser.email,
-          videoUrl: videoUrl,
-          embedUrl: embedUrl,
-          isEmbed: isEmbed,
-          hasIndexedDB: hasIndexedDB,
-          thumbnail: finalThumbnail || createDynamicPosterThumbnail(title),
-          views: 1,
-          likes: 0,
-          date: "Just now",
-          description: description || "",
-          comments: []
-        };
-
-        movies.unshift(newMovie);
-        saveMoviesToStorage();
-
-        closeUploadModal();
-        document.getElementById('uploadForm').reset();
-        showToast("Movie uploaded successfully!");
-        
-        switchNav('Home');
-      } catch (err) {
-        console.error(err);
-        showToast("Error processing movie upload.");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-      }
     }
 
     function formatViews(num) {
@@ -2409,11 +2405,10 @@
       toastMsg.textContent = message;
 
       toast.classList.remove('translate-y-20', 'opacity-0');
-      setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3000);
+      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
     }
   </script>
 </body>
 </html>
+
 
